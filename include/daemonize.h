@@ -1,15 +1,17 @@
 #ifndef __DAEMONIZE_H__
 #define __DAEMONIZE_H__
 
+#include "utils.h"
+
 void daemonize(const char *cmd) {
 	int					i, fd0, fd1, fd2;
 	pid_t				pid;
-	struct rlimit		r1;
+	struct rlimit		rl;
 	struct sigaction 	sa;
 
 	umask(0);
 
-	if (getrlimit(RLIMIT_NOFILE, &r1) < 0) {
+	if (getrlimit(RLIMIT_NOFILE, &rl) < 0) {
 		err_quit("%s: can't get file limit", cmd);
 	}
 
@@ -40,16 +42,16 @@ void daemonize(const char *cmd) {
 	}
 
 	if (rl.rlim_max == RLIM_INFINITY) {
-		rl.rlimit_max = 1024;
+		rl.rlim_max = 1024;
 	}
 
-	for (i = 0; i < rl.rlimit_max; ++i) {
+	for (i = 0; i < rl.rlim_max; ++i) {
 		close(i);
 	}
 
 	fd0 = open("/dev/null", O_RDWR);
 	fd1 = dup(0);
-	fd2 = dup(1);
+	fd2 = dup(0);
 
 	openlog(cmd, LOG_CONS, LOG_DAEMON);
 
@@ -62,13 +64,3 @@ void daemonize(const char *cmd) {
 }
 
 #endif /** __DAEMONIZE_H__ **/
-
-
-
-
-
-
-
-
-
-
