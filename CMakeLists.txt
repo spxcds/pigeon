@@ -3,4 +3,4 @@ project (pigeon)
 
 include_directories (include)
 add_subdirectory (server)
-add_subdirectory (client)
+#add_subdirectory (client)

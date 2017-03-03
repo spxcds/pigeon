@@ -2,7 +2,7 @@
 ## Introduction
 
 ```
-    Pigeon is a LAN file transfer tool;
+    Pigeon is a file transfer tool worked in LAN.
 ```
 
 ## Developers
@@ -19,5 +19,5 @@ $ make clean && make && make install
 
 ## How to use
 ```
-    to do
+    To do
 ```
