@@ -2,7 +2,7 @@
 #define __SERVER_WORK_H__
 
 #define	LISTEN_QUEUE_SIZE	20			/** listen queue size **/
-#define SERV_PORT			6500		/** serve port **/
+#define EPOLL_SIZE			100			/** epoll listened size **/
 
 #include "pigeon.h"
 #include "utils.h"

@@ -1,4 +1,4 @@
-#ifndef	__INCLUDE_DEFINITIONS_H__
+#ifdef	__INCLUDE_DEFINITIONS_H__
 //#define __INCLUDE_DEFINITIONS_H__
 /**
 socketlen_t         uint32_t
