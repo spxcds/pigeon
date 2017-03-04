@@ -13,4 +13,7 @@ int NewSocket();
 /** initial server socket, with passed struct sockaddr and port **/
 int ServerInit(struct sockaddr_in *sa, in_port_t port);
 
+/** receive the file **/
+int RecvFile(const char *fileName, int sockfd);
+
 #endif /** __SERVER_WORK_H__ **/

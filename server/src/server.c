@@ -25,6 +25,8 @@ int main() {
     			socklen_t clientLen;
     			int fdClient = accept(listenfd, 
     				(struct sockaddr*)&sockClient, &clientLen);
+                printf("fdClient = %d\n", fdClient);
+                RecvFile("test.txt", fdClient);
     		} else {
     			err_quit("error in epoll_wait");
     		}
