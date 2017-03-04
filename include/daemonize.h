@@ -1,9 +1,9 @@
-#ifndef __DAEMONIZE_H__
-#define __DAEMONIZE_H__
+#ifndef __INCLUDE_DAEMONIZE_H__
+#define __INCLUDE_DAEMONIZE_H__
 
 #include "utils.h"
 
-void daemonize(const char *cmd) {
+static void daemonize(const char *cmd) {
 	int					i, fd0, fd1, fd2;
 	pid_t				pid;
 	struct rlimit		rl;
@@ -63,4 +63,4 @@ void daemonize(const char *cmd) {
 
 }
 
-#endif /** __DAEMONIZE_H__ **/
+#endif /** __INCLUDE_DAEMONIZE_H__ **/

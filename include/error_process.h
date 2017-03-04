@@ -1,5 +1,5 @@
-#ifndef __ERROR_PROCESS_H__
-#define __ERROR_PROCESS_H__
+#ifndef __INCLUDE_ERROR_PROCESS_H__
+#define __INCLUDE_ERROR_PROCESS_H__
 
 #include <errno.h> /* for definition of errno */
 #include <stdarg.h> /* ISO C variable aruments */
@@ -121,4 +121,4 @@ err_doit(int errnoflag, int error, const char *fmt, va_list ap)
     fflush(NULL); /* flushes all stdio output streams */
 }
 
-#endif /** __ERROR_PROCESS_H__ **/
+#endif /** __INCLUDE_ERROR_PROCESS_H__ **/

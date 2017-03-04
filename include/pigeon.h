@@ -1,5 +1,5 @@
-#ifndef __PIGEON_H__
-#define __PIGEON_H__
+#ifndef __INCLUDE_PIGEON_H__
+#define __INCLUDE_PIGEON_H__
 
 #include <arpa/inet.h>
 #include <errno.h>
@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
+#include <sys/epoll.h>
 #include <sys/resource.h>
 #include <sys/select.h>
 #include <sys/socket.h>
@@ -19,4 +20,4 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#endif /** __PIGEON_H__ **/
+#endif /** __INCLUDE_PIGEON_H__ **/
