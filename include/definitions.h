@@ -54,7 +54,7 @@ int epoll_ctl(int epfd, int op, int fd, struct epoll_event *event);
 int epoll_wait(int epfd, struct epoll_event * events, int maxevents, int timeout);
 /**
 the "op" has some operations
-EPOLL_CTL_ADD	add new fd to epfd
+EPOLL_CTL_ADD	add a new fd to epfd
 EPOLL_CTL_MOD	modify a fd that has been registered
 EPOLL_CTL_DEL	delete a fd from epfd
 
@@ -68,6 +68,36 @@ EPOLLET 		将EPOLL设为边缘触发(Edge Triggered)模式，这是相对于水�
 EPOLLONESHOT	只监听一次事件，当监听完这次事件之后，如果还需要继续监听这个socket的话，需要再次把这个socket加入到EPOLL队列里
 
 **/
+
+int     pthread_equal(pthread_t, pthread_t);    // judge two threads is if equal
+pthread_t pthread_self(void);                   // return the id of the thread
+
+
+int     pthread_create(pthread_t *thread, const pthread_attr_t *attr,
+                        void *(*start_routine) (void *), void *arg);
+
+int     pthread_join(pthread_t thread, void **retval);
+int     pthread_cancle(pthread_t);
+int     pthread_cancel(pthread_t thread);       // passive stopped
+void    pthread_exit(void *retval);             // active stopped 
+
+void pthread_cleanup_push(void (*routine)(void *),
+                                 void *arg);
+
+void pthread_cleanup_pop(int execute);
+int pthread_attr_init(pthread_attr_t *attr);
+int pthread_attr_destroy(pthread_attr_t *attr);
+
+int pthread_attr_getdetachstat(const pthread_t *restrict attr, int *detachstate);
+int pthread_attr_setdetachstat(const pthread_t *restrict attr, int  detachstate);
+
+int pthread_mutex_init(pthread_mutex_t *restrict mutex,
+                            const pthread_mutex_attr_t *mutexattr);
+int pthread_mutex_destroy(pthread_mutex_t *mutex);
+
+int pthread_mutex_lock(pthread_mutex_t *mutex);
+int pthread_mutex_trylock(pthread_mutex_t *mutex);
+int pthread_mutex_unlock(pthreadd_t *mutex);
 
 
 #endif /** __INCLUDE_DEFINITIONS_H__ **/
