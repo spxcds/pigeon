@@ -20,5 +20,6 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <semaphore.h>
 
 #endif /** __INCLUDE_PIGEON_H__ **/

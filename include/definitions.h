@@ -90,14 +90,61 @@ int pthread_attr_destroy(pthread_attr_t *attr);
 
 int pthread_attr_getdetachstat(const pthread_t *restrict attr, int *detachstate);
 int pthread_attr_setdetachstat(const pthread_t *restrict attr, int  detachstate);
-
+/*
+pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+*/
 int pthread_mutex_init(pthread_mutex_t *restrict mutex,
                             const pthread_mutex_attr_t *mutexattr);
 int pthread_mutex_destroy(pthread_mutex_t *mutex);
 
 int pthread_mutex_lock(pthread_mutex_t *mutex);
 int pthread_mutex_trylock(pthread_mutex_t *mutex);
-int pthread_mutex_unlock(pthreadd_t *mutex);
+int pthread_mutex_unlock(pthread_t *mutex);
+
+int pthread_rwlock_init(pthread_rwlock_t *rwlock, const pthread_rwlockattr_t *attr);
+int pthread_rwlock_destroy(pthread_rwlock_t *rwlock);
+
+int pthread_rwlock_rdlock(pthread_rwlock_t *rwlock);
+int pthread_rwlock_wrlock(pthread_rwlock_t *rwlock);
+int pthread_rwlock_unlock(pthread_rwlock_t *rwlock);
+
+int pthread_cond_init(pthread_cond_t *cond, pthread_condattr_t *attr);
+int pthread_cond_destroy(pthread_cond_t *cond);
+
+int pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex);
+int pthread_cond_timewait(pthread_cond_t *cond, pthread_mutex_t *mutex,
+                            const struct timespec *timeout);
+
+int pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex) {
+/**
+1>  unlock(&mutex);
+2>  lock(&mutex)
+3>  move itself into the wait queue of condition
+4>  unlock(&mutex)
+5>  wait until other threads wake up itself
+6>  lock(&mutex)
+7>  delete itself from the wait queue
+**/
+}
+
+struct timespec {
+    time_t tv_sec;  /* seconds */
+    long tv_nsec;   /* nanoseconds */ 
+}
+
+int pthread_cond_signal(pthread_cond_t *cond);
+int pthread_cond_broadcast(pthread_cond_t *cond);
+
+
+int sem_init(sem_t *sem, int pshared, unsigned int value);
+/**
+pshared = 0, in one process, or, in more than one process
+**/
+int sem_destroy(sem_t *sem);
+
+int sem_post(sem_t *sem);               //  add one to sem
+int sem_wait(sem_t *sem);               //  minus one to sem
+int sem_trywait(sem_t *sem);            //  sem_wait non-blocking version
 
 
 #endif /** __INCLUDE_DEFINITIONS_H__ **/
