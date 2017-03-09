@@ -14,27 +14,28 @@ typedef struct job{
 /* job queue */
 typedef struct jobqueue{
     pthread_mutex_t     jobMutex;
-    job                 *front;
-    job                 *rear;
+    job_t               *front;
+    job_t               *rear;
     sem_t               hasJob;
 } jobqueue_t;
 
 
 /* thread */
+typedef struct tpool tpool_t;
 typedef struct thread{
     int                 id;
     pthread_t           pthread;
-    struct tpool_t      *thpool;
+    tpool_t             *thpool;
 } thread_t;
 
 
 /* threadpool */
 typedef struct tpool{
-    thread**            threads;
+    thread_t            **threads;
     volatile int        numThreadsAlive;
     volatile int        numThreadsWorking;
-    volatile int        threadsKeepAlive;
-    volatile int        threadOnHold;
+    volatile int        keepAlive;
+    volatile int        onHold;
     pthread_mutex_t     tpoolMutex;
     pthread_cond_t      threadsAllIdle;           /* signal to tpool_wait */
     jobqueue_t          jobqueue;

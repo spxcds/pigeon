@@ -1,11 +1,12 @@
 #include "pigeon.h"
+#include "error_process.h"
 #include "thpool.h"
-
 
 static int JobqueueInit(jobqueue_t *);
 static void JobqueueDestroy(jobqueue_t *);
 static job_t *JobqueueFront(jobqueue_t *);
 static void JobqueuePush(jobqueue_t*, job_t*);
+static int JobqueueIsEmpty(jobqueue_t *);
 
 static int ThreadInit(tpool_t *, thread_t **, int);
 static void *ThreadRoutine(thread_t *);
@@ -26,8 +27,8 @@ tpool_t *ThpoolInit(int num_threads) {
     }
     threadPool->numThreadsAlive = 0;
     threadPool->numThreadsWorking = 0;
-    threadPool->threadOnHold = 0;
-    threadPool->threadsKeepAlive = 1;
+    threadPool->onHold = 0;
+    threadPool->keepAlive = 1;
 
     /* initialize the job queue */
     if (JobqueueInit(&threadPool->jobqueue) != 0){
@@ -44,26 +45,26 @@ tpool_t *ThpoolInit(int num_threads) {
         return NULL;
     }
 
-    pthread_mutex_init(&(threadPool->tpMutex), NULL);
+    pthread_mutex_init(&(threadPool->tpoolMutex), NULL);
     pthread_cond_init(&threadPool->threadsAllIdle, NULL);
 
     /* thread init */
     int i;
     for (i = 0; i < num_threads; ++i) {
-        ThradInit(threadPool, &threadPool->threads[i], i);
+        ThreadInit(threadPool, &threadPool->threads[i], i);
     }
     
     /* wait for threads to initialize */
-    while (threadPool->num_threads_alive < num_threads) {
+    while (threadPool->numThreadsAlive < num_threads) {
     }
 
     return threadPool;
 }
 
 
-/* ad a new job to the thread pool */
+/* add a new job to the thread pool */
 int ThpoolAddJob(tpool_t *threadPool, void (*function)(void*), void* args) {
-    job_t * newJob = NULL
+    job_t * newJob = NULL;
     newJob = (job_t *)malloc(sizeof(job_t));
 
     if (newJob == NULL) {
@@ -71,8 +72,8 @@ int ThpoolAddJob(tpool_t *threadPool, void (*function)(void*), void* args) {
         return -1;
     }
 
-    newJob->function=function_p;
-    newJob->arg=arg_p;
+    newJob->function = function;
+    newJob->arg = args;
 
     JobqueuePush(&threadPool->jobqueue, newJob);
 
@@ -80,27 +81,25 @@ int ThpoolAddJob(tpool_t *threadPool, void (*function)(void*), void* args) {
 }
 
 
-/* Wait until all jobs have finished */
-void thpool_wait(thpool_* thpool_p){
-    pthread_mutex_lock(&thpool_p->thcount_lock);
-    while (thpool_p->jobqueue.len || thpool_p->num_threads_working) {
-        pthread_cond_wait(&thpool_p->threads_all_idle, &thpool_p->thcount_lock);
+/* wait until all jobs have finished */
+void ThpoolWait(tpool_t *threadPool){
+    pthread_mutex_lock(&threadPool->tpoolMutex);
+    while (JobqueueIsEmpty(&threadPool->jobqueue) == 1 
+                && threadPool->numThreadsWorking > 0) {
+        pthread_cond_wait(&threadPool->threadsAllIdle, &threadPool->tpoolMutex);
     }
-    pthread_mutex_unlock(&thpool_p->thcount_lock);
+    pthread_mutex_unlock(&threadPool->tpoolMutex);
 }
 
 
-/* Destroy the threadpool */
-void thpool_destroy(thpool_* thpool_p){
-    /* No need to destory if it's NULL */
-    if (thpool_p == NULL) return ;
+/* destroy the threadpool */
+void ThpoolDestroy(tpool_t *threadPool){
+    if (threadPool == NULL) return ;
 
-    volatile int threads_total = thpool_p->num_threads_alive;
+    threadPool->keepAlive = 0;
 
-    /* End each thread 's infinite loop */
-    threads_keepalive = 0;
-
-    /* Give one second to kill idle threads */
+    // Give one second to kill idle threads 
+    /**
     double TIMEOUT = 1.0;
     time_t start, end;
     double tpassed = 0.0;
@@ -111,25 +110,24 @@ void thpool_destroy(thpool_* thpool_p){
         tpassed = difftime(end,start);
     }
 
-    /* Poll remaining threads */
     while (thpool_p->num_threads_alive){
         bsem_post_all(thpool_p->jobqueue.has_jobs);
         sleep(1);
     }
+    **/
 
-    /* Job queue cleanup */
-    jobqueue_destroy(&thpool_p->jobqueue);
-    /* Deallocs */
-    int n;
-    for (n=0; n < threads_total; n++){
-        thread_destroy(thpool_p->threads[n]);
+    JobqueueDestroy(&threadPool->jobqueue);
+    
+    int i;
+    for (i = 0; i < threadPool->numThreadsAlive; ++i) {
+        free(threadPool->threads[i]);
     }
-    free(thpool_p->threads);
-    free(thpool_p);
+    free(threadPool->threads);
+    free(threadPool);
 }
 
 
-/* Pause all threads in threadpool */
+/**
 void thpool_pause(thpool_* thpool_p) {
     int n;
     for (n=0; n < thpool_p->num_threads_alive; n++){
@@ -138,7 +136,7 @@ void thpool_pause(thpool_* thpool_p) {
 }
 
 
-/* Resume all threads in threadpool */
+
 void thpool_resume(thpool_* thpool_p) {
     // resuming a single threadpool hasn't been
     // implemented yet, meanwhile this supresses
@@ -152,10 +150,7 @@ void thpool_resume(thpool_* thpool_p) {
 int thpool_num_threads_working(thpool_* thpool_p){
     return thpool_p->num_threads_working;
 }
-
-
-
-
+**/
 
 
 
@@ -170,8 +165,8 @@ static int ThreadInit(tpool_t *threadPool, thread_t **threads, int id) {
     (*threads)->id     = id;
     (*threads)->thpool = threadPool;
 
-    if ((pthread_create(&(*threads)->pthread), NULL,
-                            (void *)ThreadRoutine, (void*)(*thread_p)) != 0) {
+    if (pthread_create(&(*threads)->pthread, NULL,
+                            (void *)ThreadRoutine, (void*)(*threads)) != 0) {
         err_sys("%s: create pthread failed\n", __FUNCTION__);
         return -1;
     }
@@ -180,7 +175,7 @@ static int ThreadInit(tpool_t *threadPool, thread_t **threads, int id) {
 }
 
 
-/* Sets the calling thread on hold */
+/**
 static void thread_hold(int sig_id) {
     (void)sig_id;
     threads_on_hold = 1;
@@ -188,14 +183,16 @@ static void thread_hold(int sig_id) {
         sleep(1);
     }
 }
+**/
 
 
 static void *ThreadRoutine(thread_t *thread) {
 
-    /* Assure all threads have been created before starting serving */
-    thpool_* thpool_p = thread_p->thpool_p;
+    // assure all threads have been created before starting serving 
+    tpool_t *threadPool = thread->thpool;
 
-    /* Register signal handler */
+    // Register signal handler
+    /**
     struct sigaction act;
     sigemptyset(&act.sa_mask);
     act.sa_flags = 0;
@@ -203,59 +200,51 @@ static void *ThreadRoutine(thread_t *thread) {
     if (sigaction(SIGUSR1, &act, NULL) == -1) {
         err("thread_do(): cannot handle SIGUSR1");
     }
+    **/
 
-    /* Mark thread as alive (initialized) */
-    pthread_mutex_lock(&thpool_p->thcount_lock);
-    thpool_p->num_threads_alive += 1;
-    pthread_mutex_unlock(&thpool_p->thcount_lock);
+    
+    pthread_mutex_lock(&threadPool->tpoolMutex);
+    threadPool->numThreadsAlive++;
+    pthread_mutex_unlock(&threadPool->tpoolMutex);
 
-    while(threads_keepalive){
+    while (threadPool->keepAlive == 1) {
+        sem_wait(&(threadPool->jobqueue.hasJob));
 
-        bsem_wait(thpool_p->jobqueue.has_jobs);
+        if (threadPool->keepAlive == 1) {
+            pthread_mutex_lock(&threadPool->tpoolMutex);
+            threadPool->numThreadsWorking++;
+            pthread_mutex_unlock(&threadPool->tpoolMutex);
 
-        if (threads_keepalive){
-
-            pthread_mutex_lock(&thpool_p->thcount_lock);
-            thpool_p->num_threads_working++;
-            pthread_mutex_unlock(&thpool_p->thcount_lock);
-
-            /* Read job from queue and execute it */
+            // read and execute the job from job queue
             void (*func_buff)(void*);
-            void*  arg_buff;
-            job* job_p = jobqueue_pull(&thpool_p->jobqueue);
-            if (job_p) {
-                func_buff = job_p->function;
-                arg_buff  = job_p->arg;
+            void    *arg_buff;
+            job_t *newJob = JobqueueFront(&threadPool->jobqueue);
+            if (newJob != NULL) {
+                func_buff = newJob->function;
+                arg_buff  = newJob->arg;
                 func_buff(arg_buff);
-                free(job_p);
+                free(newJob);
             }
 
-            pthread_mutex_lock(&thpool_p->thcount_lock);
-            thpool_p->num_threads_working--;
-            if (!thpool_p->num_threads_working) {
-                pthread_cond_signal(&thpool_p->threads_all_idle);
+            pthread_mutex_lock(&threadPool->tpoolMutex);
+            threadPool->numThreadsWorking--;
+            if (threadPool->numThreadsWorking == 0) {
+                pthread_cond_signal(&threadPool->threadsAllIdle);
             }
-            pthread_mutex_unlock(&thpool_p->thcount_lock);
+            pthread_mutex_unlock(&threadPool->tpoolMutex);
 
         }
     }
-    pthread_mutex_lock(&thpool_p->thcount_lock);
-    thpool_p->num_threads_alive --;
-    pthread_mutex_unlock(&thpool_p->thcount_lock);
+    pthread_mutex_lock(&threadPool->tpoolMutex);
+    threadPool->numThreadsAlive--;
+    pthread_mutex_unlock(&threadPool->tpoolMutex);
 
     return NULL;
 }
 
 
-/* Frees a thread  */
-static void thread_destroy (thread* thread_p){
-    free(thread_p);
-}
-
-
-
 /* initialize queue */
-static int JobqueueInit(jobqueue* JbQueue){
+static int JobqueueInit(jobqueue_t *JbQueue){
     JbQueue->front  = NULL;
     JbQueue->rear   = NULL;
 
@@ -281,10 +270,10 @@ static void JobqueueDestroy(jobqueue_t *JbQueue){
 static void JobqueuePush(jobqueue_t* JbQueue, job_t* newJob){
 
     pthread_mutex_lock(&JbQueue->jobMutex);
-    newjob->next = NULL;
+    newJob->next = NULL;
 
     if (JbQueue->rear == NULL) {
-        JbQueue->head = newJob;
+        JbQueue->front = newJob;
         JbQueue->rear = newJob;
     } else {
         JbQueue->rear->next = newJob;
@@ -298,7 +287,7 @@ static void JobqueuePush(jobqueue_t* JbQueue, job_t* newJob){
 /*  get one job from queue */
 static job_t *JobqueueFront(jobqueue_t *JbQueue) {
     pthread_mutex_lock(&JbQueue->jobMutex);
-    job_t* job_p = jobqueue_p->front;
+    job_t* job_p = JbQueue->front;
     if (JbQueue->front != NULL) {
         JbQueue->front = JbQueue->front->next;
         if (JbQueue->front == NULL) {
@@ -308,4 +297,12 @@ static job_t *JobqueueFront(jobqueue_t *JbQueue) {
 
     pthread_mutex_unlock(&JbQueue->jobMutex);
     return job_p;
+}
+
+/* judge the job queue if empty */
+static int JobqueueIsEmpty(jobqueue_t *JbQueue) {
+    pthread_mutex_lock(&JbQueue->jobMutex);
+    int isEmpty = JbQueue->front == NULL;
+    pthread_mutex_unlock(&JbQueue->jobMutex);
+    return isEmpty;
 }

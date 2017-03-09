@@ -21,5 +21,6 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include <semaphore.h>
+#include <pthread.h>
 
 #endif /** __INCLUDE_PIGEON_H__ **/
