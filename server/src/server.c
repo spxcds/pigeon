@@ -1,12 +1,13 @@
 #include "pigeon.h"
 #include "daemonize.h"
-
+#include "thpool.h"
 #include "work.h"
 
 // server
 int main() {
 //    daemonize("pigeon");
 
+    tpool_t *threadPool = ThpoolInit(4);
     struct sockaddr_in servaddr;
     int listenfd = ServerInit(&servaddr, SERV_PORT);
     static struct epoll_event epollEvent, epollEvents[EPOLL_SIZE];
