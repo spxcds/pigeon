@@ -4,7 +4,7 @@ file (GLOB_RECURSE ALL_SRC_FILES *.c)
 file (GLOB_RECURSE ALL_INCLUDE_FILES *.h)
 
 add_definitions (-D_GNU_SOURCE)
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -Werror=implicit-function-declaration")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -std=c99 -Werror=implicit-function-declaration")
 add_executable (thpool ${ALL_SRC_FILES})
 
 TARGET_LINK_LIBRARIES(thpool pthread)

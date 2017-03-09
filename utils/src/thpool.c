@@ -84,8 +84,8 @@ int ThpoolAddJob(tpool_t *threadPool, void (*function)(void*), void* args) {
 /* wait until all jobs have finished */
 void ThpoolWait(tpool_t *threadPool){
     pthread_mutex_lock(&threadPool->tpoolMutex);
-    while (JobqueueIsEmpty(&threadPool->jobqueue) == 1 
-                && threadPool->numThreadsWorking > 0) {
+    while (JobqueueIsEmpty(&threadPool->jobqueue) == 0 
+                || threadPool->numThreadsWorking > 0) {
         pthread_cond_wait(&threadPool->threadsAllIdle, &threadPool->tpoolMutex);
     }
     pthread_mutex_unlock(&threadPool->tpoolMutex);
@@ -98,23 +98,9 @@ void ThpoolDestroy(tpool_t *threadPool){
 
     threadPool->keepAlive = 0;
 
-    // Give one second to kill idle threads 
-    /**
-    double TIMEOUT = 1.0;
-    time_t start, end;
-    double tpassed = 0.0;
-    time (&start);
-    while (tpassed < TIMEOUT && thpool_p->num_threads_alive){
-        bsem_post_all(thpool_p->jobqueue.has_jobs);
-        time (&end);
-        tpassed = difftime(end,start);
+    while (threadPool->numThreadsAlive > 0) {
+        sem_post(&threadPool->jobqueue.hasJob);
     }
-
-    while (thpool_p->num_threads_alive){
-        bsem_post_all(thpool_p->jobqueue.has_jobs);
-        sleep(1);
-    }
-    **/
 
     JobqueueDestroy(&threadPool->jobqueue);
     
@@ -151,8 +137,6 @@ int thpool_num_threads_working(thpool_* thpool_p){
     return thpool_p->num_threads_working;
 }
 **/
-
-
 
 
 static int ThreadInit(tpool_t *threadPool, thread_t **threads, int id) {
@@ -280,7 +264,7 @@ static void JobqueuePush(jobqueue_t* JbQueue, job_t* newJob){
         JbQueue->rear = newJob;
     }
     sem_post(&JbQueue->hasJob);
-    pthread_mutex_lock(&JbQueue->jobMutex);
+    pthread_mutex_unlock(&JbQueue->jobMutex);
 }
 
 
