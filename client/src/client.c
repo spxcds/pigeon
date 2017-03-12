@@ -21,6 +21,7 @@ int main(int argc, char **argv) {
 
     int confd = connect(sockfd, (struct sockaddr *)&servaddr, sizeof(servaddr));
     printf("confd = %d\n", confd);
+    perror("hehe ");
     int fd = open("test.txt", O_RDONLY);
 
     char buf[200];

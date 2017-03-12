@@ -6,7 +6,12 @@
 // server
 int main(int argc, char **argv) {
     daemonize(argv[0]);
-
+    printf("I'm a good boy!!!");
+    while (1) {
+        printf("hello, world\n");
+        sleep(10);
+    }
+/**
     tpool_t *threadPool = ThpoolInit(4);
     struct sockaddr_in servaddr;
     int listenfd = ServerInit(&servaddr, SERV_PORT);
@@ -34,6 +39,7 @@ int main(int argc, char **argv) {
     	}
     	sleep(1);
     }
+    **/
     return 0;
 }
 

@@ -7,13 +7,13 @@ void daemonize(const char *cmd) {
     pid_t                pid;
     struct rlimit        rl;
     struct sigaction     sa;
+    
+    /* clear file creation mask */
+    umask(0);
 
     if (getuid() != 0) {
         err_quit("%s: Permission denied", cmd);
     }
-
-    /* clear file creation mask */
-    umask(0);
 
     /* get maximum number of file descriptors */
     if (getrlimit(RLIMIT_NOFILE, &rl) < 0) {
@@ -54,7 +54,10 @@ void daemonize(const char *cmd) {
     }
 
     fd0 = open("/dev/null", O_RDWR);
-    fd1 = open("/dev/null", O_RDWR | O_CREAT | O_APPEND);
+    if (access(LOG_FILE, 0) == -1) {
+        creat(LOG_FILE, 0777);
+    }
+    fd1 = open(LOG_FILE, O_RDWR | O_APPEND);
     fd2 = dup(0);
 
     openlog(cmd, LOG_CONS, LOG_DAEMON);
