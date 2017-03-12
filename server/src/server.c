@@ -4,8 +4,8 @@
 #include "work.h"
 
 // server
-int main() {
-//    daemonize("pigeon");
+int main(int argc, char **argv) {
+    daemonize(argv[0]);
 
     tpool_t *threadPool = ThpoolInit(4);
     struct sockaddr_in servaddr;

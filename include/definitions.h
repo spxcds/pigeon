@@ -23,7 +23,7 @@ struct in_addr {
 };
 
 struct sockaddr_in {
-    uint8_t         sin_len;
+//    uint8_t         sin_len;
     sa_family_t     sin_family;
     in_port_t       sin_port;
     struct in_addr  sin_addr;
@@ -31,7 +31,7 @@ struct sockaddr_in {
 };
 
 struct sockaddr {
-    uint8_t         sa_len;
+//    uint8_t         sa_len;
     sa_family_t     sa_family;
     char            sa_data[14];
 };
@@ -40,12 +40,20 @@ int inet_aton(const char *strptr, struct in_addr *addrptr);
 in_addr_t inet_addr(const char *strptr);
 char *inet_ntoa(struct in_addr iaddr);
 
-int inet_pton(int family, const char *strptr, void *addrptr);
+int inet_pton(int family, const char *strptr, void *addrptrz);
 const char *inet_ntop(int family, const void *addrptr, char *strptr, size_t len);
 
 int bind(int, struct sockaddr *, socklen_t);
 int accept(int, struct sockaddr *, socklen_t *);
 int connect(sockfd, (struct sockaddr *), socklen_t);
+
+ssize_t send(int sockfd, const void *buf, size_t nbytes, int flag);
+ssize_t sendto(int sockfd, const void *buf, size_t nbytes, int flag
+                const struct sockaddr *destaddr, socklen_t destlen);
+
+ssize_t recv(int sockfd, void *buf, size_t nbytes, int flag);
+ssize_t recvfrom(int sockfd, void *buf, size_t nbytes, int flag,
+                const struct sockaddr *destaddr, socklen_t destlen););
 
 int socket(int family, int type, int protocol);
 
