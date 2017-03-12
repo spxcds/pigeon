@@ -1,6 +1,5 @@
 #include "pigeon.h"
-#include "daemonize.h"
-#include "thpool.h"
+#include "utils.h"
 #include "work.h"
 
 // server

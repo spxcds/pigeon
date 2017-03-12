@@ -1,5 +1,5 @@
 #include "pigeon.h"
-#include "daemonize.h"
+#include "utils.h"
 #include "error_process.h"
 
 void daemonize(const char *cmd) {
