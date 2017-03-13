@@ -5,11 +5,13 @@
 // server
 int main(int argc, char **argv) {
     printf("I'm a good boy!!!\n");
-    
-    daemonize(argv[0]);
-    
+
+//    daemonize(argv[0]);
+    char str[] = "Hello, World";
+    err_msg("%s == %s--", str, str);  
+    puts("111");
     while (1) {
-        printf("hello, world\n");
+        err_msg("%s", str);
         sleep(1);
     }
 /**

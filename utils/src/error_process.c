@@ -2,6 +2,21 @@
 #include "error_process.h"
 
 static void err_doit(int, int, const char *, va_list);
+static void err_time();
+
+/*
+get current time
+*/
+
+void err_time() {
+    time_t timep;
+    struct tm *p;
+    time(&timep);
+    p = localtime(&timep);
+    printf("[%04d/%02d/%02d %02d:%02d:%02d]: ", 
+        (1900+p->tm_year), (1+p->tm_mon), p->tm_mday, 
+                p->tm_hour, p->tm_min, p->tm_sec);
+}
 
 /*
  * Nonfatal error related to a system call.
@@ -10,6 +25,7 @@ static void err_doit(int, int, const char *, va_list);
 void err_ret(const char *fmt, ...) {
     va_list ap;
 
+    err_time();
     va_start(ap, fmt);
     err_doit(1, errno, fmt, ap);
     va_end(ap);
@@ -23,6 +39,7 @@ void err_ret(const char *fmt, ...) {
 void err_sys(const char *fmt, ...) {
     va_list ap;
 
+    err_time();
     va_start(ap, fmt);
     err_doit(1, errno, fmt, ap);
     va_end(ap);
@@ -38,6 +55,7 @@ void err_sys(const char *fmt, ...) {
 void err_exit(int error, const char *fmt, ...) {
     va_list ap;
 
+    err_time();
     va_start(ap, fmt);
     err_doit(1, error, fmt, ap);
     va_end(ap);
@@ -52,6 +70,7 @@ void err_exit(int error, const char *fmt, ...) {
 void err_dump(const char *fmt, ...) {
     va_list ap;
 
+    err_time();
     va_start(ap, fmt);
     err_doit(1, errno, fmt, ap);
     va_end(ap);
@@ -67,6 +86,7 @@ void err_dump(const char *fmt, ...) {
 void err_msg(const char *fmt, ...) {
     va_list ap;
 
+    err_time();
     va_start(ap, fmt);
     err_doit(0, 0, fmt, ap);
     va_end(ap);
@@ -80,6 +100,7 @@ void err_msg(const char *fmt, ...) {
 void err_quit(const char *fmt, ...) {
     va_list ap;
 
+    err_time();
     va_start(ap, fmt);
     err_doit(0, 0, fmt, ap);
     va_end(ap);
