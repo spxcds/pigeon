@@ -5,8 +5,6 @@
 #include <stdarg.h> /* ISO C variable aruments */
 
 
-const static int MAXLINE = 2048;
-
 /*
  * Nonfatal error related to a system call.
  * Print a message and return.

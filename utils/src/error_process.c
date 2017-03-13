@@ -1,6 +1,7 @@
 #include "pigeon.h"
 #include "error_process.h"
 
+static int MAXLINE = 2048;
 static void err_doit(int, int, const char *, va_list);
 static void err_time();
 
@@ -119,6 +120,6 @@ static void err_doit(int errnoflag, int error, const char *fmt, va_list ap) {
        snprintf(buf+strlen(buf), MAXLINE-strlen(buf), ": %s", strerror(error));
     strcat(buf, "\n");
     fflush(stdout); /* in case stdout and stderr are the same */
-    fputs(buf, stderr);
+    fputs(buf, stdout);
     fflush(NULL); /* flushes all stdio output streams */
 }
