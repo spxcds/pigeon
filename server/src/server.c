@@ -4,11 +4,13 @@
 
 // server
 int main(int argc, char **argv) {
+    printf("I'm a good boy!!!\n");
+    
     daemonize(argv[0]);
-    printf("I'm a good boy!!!");
+    
     while (1) {
         printf("hello, world\n");
-        sleep(10);
+        sleep(1);
     }
 /**
     tpool_t *threadPool = ThpoolInit(4);

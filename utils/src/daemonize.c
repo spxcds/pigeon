@@ -55,9 +55,11 @@ void daemonize(const char *cmd) {
 
     fd0 = open("/dev/null", O_RDWR);
     if (access(LOG_FILE, 0) == -1) {
-        creat(LOG_FILE, 0777);
+        fd1 = creat(LOG_FILE, 0777);
+    } else {
+        fd1 = open(LOG_FILE, O_RDWR | O_APPEND);    
     }
-    fd1 = open(LOG_FILE, O_RDWR | O_APPEND);
+    
     fd2 = dup(0);
 
     openlog(cmd, LOG_CONS, LOG_DAEMON);
