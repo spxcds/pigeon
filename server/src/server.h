@@ -10,5 +10,6 @@ int NewSocket();
 /** initial server socket, with passed struct sockaddr and port **/
 int ServerInit(struct sockaddr_in *sa, in_port_t port);
 
+void process(int fd);
 
 #endif /** __SERVER_SERVER_H__ **/

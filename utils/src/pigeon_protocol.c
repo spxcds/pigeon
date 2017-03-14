@@ -16,7 +16,7 @@ static unsigned short msgCheck(msg_t *msg) {
 }
 
 /*
-static int writeFileHeadToBuf(filehead_t *fileHead, void *buf_, int len) {
+int writeFileHeadToBuf(filehead_t *fileHead, void *buf_, int len) {
     if (fileHead == NULL || buf_ == NULL) {
         return -1;
     }
@@ -30,7 +30,7 @@ static int writeFileHeadToBuf(filehead_t *fileHead, void *buf_, int len) {
     tlen = snprintf(buf + length, len - length, "%d", fileHead->fileSize);
     length += tlen + 1;
     if (length > len) return -1;
-    
+    /*
     tlen = snprintf(buf + length, len - length, "%d", fileHead->blockCount);
     length += tlen + 1;
     if (length > len) return -1;
@@ -39,10 +39,10 @@ static int writeFileHeadToBuf(filehead_t *fileHead, void *buf_, int len) {
     length += tlen + 1;
     if (length > len) return -1;
     
-    return 0;
+    return length;
 }
 
-static int readFileHeadFromBuf(filehead_t *fileHead, void *buf_, int len) {
+int readFileHeadFromBuf(filehead_t *fileHead, void *buf_, int len) {
     if (fileHead == NULL || buf_ == NULL) {
         return -1;
     }
@@ -56,7 +56,7 @@ static int readFileHeadFromBuf(filehead_t *fileHead, void *buf_, int len) {
     tlen = sscanf(buf + length, "%d", &fileHead->fileSize);
     length += tlen + 1;
     if (length > len) return -1;
-    
+    /*
     tlen = sscanf(buf + length, "%d", &fileHead->blockCount);
     length += tlen + 1;
     if (length > len) return -1;
@@ -64,10 +64,11 @@ static int readFileHeadFromBuf(filehead_t *fileHead, void *buf_, int len) {
     tlen = sscanf(buf + length, "%d", &fileHead->blockSize);
     length += tlen + 1;
     if (length > len) return -1;
-
-    return 0;
+   
+    return length;
 }
-
+**/
+/**
 static int writeFileBlockToBuf(fileblock_t *fileBlock, void *buf_, int len) {
     if (fileBlock == NULL || buf_ == NULL) {
         return -1;
@@ -122,7 +123,6 @@ static int readFileBlockFromBuf(fileblock_t *fileBlock, void *buf_, int len) {
 }
 
 
-
 filehead_t *createFileHead() {
     filehead_t *pfileHead = (filehead_t *)malloc(sizeof(filehead_t));
 
@@ -135,10 +135,9 @@ filehead_t *createFileHead() {
         blockSize 
     }
 
-
     return pfileHead;
 }
-*/
+**/
 static msg_t *newMsg(size_t bufLen) {
     msg_t *msg = (msg_t *)malloc(sizeof(msg_t) + bufLen);
     return msg;
@@ -157,7 +156,11 @@ int writeMsg(int sockfd, enum MessageType mt,
     msg->bufLen = bufLen;
     memcpy(msg->buf, buf, bufLen);
     msg->checkNum = msgCheck(msg);
-    if (send(sockfd, (void*)&msg, sizeof(msg_t) + msg->bufLen, 0) == -1) {
+
+    printf("msg->type = %d\n", msg->type);
+    printf("msg->bufLen = %ld\n", msg->bufLen);
+    
+    if (send(sockfd, msg, sizeof(msg_t) + msg->bufLen, 0) == -1) {
         err_msg("%s: send error!", __FUNCTION__);
         return -1;
     }
@@ -173,14 +176,17 @@ int readMsg(int sockfd, enum MessageType *mt,
         err_msg("%s: new message failed", __FUNCTION__);
         return -1;
     }
-    if (recv(sockfd, msg, sizeof(msg_t) + BUFFSIZE, 0) == -1) {
+    int fff = 0;
+    if ((fff = recv(sockfd, msg, sizeof(msg_t) + BUFFSIZE, 0)) == -1) {
         err_msg("%s: recv error!", __FUNCTION__);
         return -1;
     }
+    
     if (msg->checkNum != msgCheck(msg)) {
         err_msg("%s: check failed", __FUNCTION__);
         return -1;
     }
+    
     *mt = msg->type;
     *bufLen = msg->bufLen;
     memcpy(buf, msg->buf, msg->bufLen);

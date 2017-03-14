@@ -7,5 +7,6 @@
 #include "error_process.h"
 #include "thpool.h"
 #include "daemonize.h"
+#include "pigeon_protocol.h"
 
 #endif /** __UTILS_H__ **/

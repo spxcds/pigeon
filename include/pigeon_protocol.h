@@ -17,22 +17,24 @@ enum ErrorType {
 
 typedef struct filehead {
     char        fileName[FILENAME_MAXLEN];      // file name
-    int         fileSize;                       // file size
+    size_t         fileSize;                       // file size
 //    int         blockCount;                     // number of block
 //    int         blockSize;                      // the size of every block
 }filehead_t;
 
+/**
 typedef struct content
 {
     size_t      len;                            // the buf content
     char        buf[0];                         // the first address of the buf
 }content_t;
+**/
 
 typedef struct fileblock {
     char        fileName[FILENAME_MAXLEN];      // file name
     size_t      offset;                         // offset
-//    size_t      len;                            // block length
-    content_t   buf;                            // the content;
+    size_t      len;                            // block length
+    char        buf[0];                            // the content;
 }fileblock_t;
 
 typedef struct message{
@@ -42,6 +44,13 @@ typedef struct message{
     char                        buf[0];
 }msg_t;
 
+int readFileHeadFromBuf(filehead_t *fileHead, void *buf_, int len);
+int writeFileHeadToBuf(filehead_t *fileHead, void *buf_, int len);
+int writeMsg(int sockfd, enum MessageType mt, 
+                        void *buf, int bufLen);
+
+int readMsg(int sockfd, enum MessageType *mt,
+                        void *buf, int *bufLen);
 /* write the msg */
 //int writeMsg(int sockfd, void *buff, enum MessageType mt);
 

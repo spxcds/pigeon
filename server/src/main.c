@@ -7,7 +7,7 @@
 int main(int argc, char **argv) {
 //    daemonize(argv[0]);
     
-    tpool_t *threadPool = ThpoolInit(4);
+//    tpool_t *threadPool = ThpoolInit(4);
     struct sockaddr_in servaddr;
     int listenfd = ServerInit(&servaddr, SERV_PORT);
     static struct epoll_event epollEvent, epollEvents[EPOLL_SIZE];
@@ -26,8 +26,10 @@ int main(int argc, char **argv) {
     			socklen_t clientLen;
     			int fdClient = accept(listenfd, 
     				(struct sockaddr*)&sockClient, &clientLen);
-                printf("fdClient = %d\n", fdClient);
-                RecvFile("test.txt", fdClient);
+
+                process(fdClient);
+
+
     		} else {
     			err_quit("error in epoll_wait");
     		}

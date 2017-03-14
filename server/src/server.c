@@ -1,4 +1,3 @@
-
 #include "pigeon.h"
 #include "utils.h"
 #include "server.h"
@@ -27,4 +26,22 @@ int ServerInit(struct sockaddr_in *sa, in_port_t port) {
         err_quit("Server listen failed!");
     }
     return listenfd;
+}
+
+void process(int fdClient) {
+    printf("fdClient = %d\n", fdClient);
+    char buf[2048];
+    int bufLen;
+    enum MessageType mt;
+    readMsg(fdClient, &mt, buf, &bufLen);
+    filehead_t fileHead;
+    memcpy(&fileHead, buf, bufLen);
+    printf("filename = %s\n", fileHead.fileName);
+    printf("filesize = %ld\n", fileHead.fileSize);
+    
+    /**
+    readFileHeadFromBuf(&fileHead, buf, 2048);
+    printf("fileHead->name = %s\n", fileHead.fileName);
+    printf("fileHead->size = %d\n", fileHead.fileSize);
+    **/
 }
