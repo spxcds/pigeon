@@ -8,14 +8,14 @@ static unsigned short msgCheck(msg_t *msg) {
     }
     unsigned short checkNum = 0;
 
-    int len = sizeof(msg->buf);
-    for (int i = 0; i < len; ++i) {
+    for (int i = 0; i < msg->bufLen; ++i) {
         checkNum += msg->buf[i];
     }
 
     return checkNum;
 }
 
+/*
 static int writeFileHeadToBuf(filehead_t *fileHead, void *buf_, int len) {
     if (fileHead == NULL || buf_ == NULL) {
         return -1;
@@ -122,72 +122,69 @@ static int readFileBlockFromBuf(fileblock_t *fileBlock, void *buf_, int len) {
 }
 
 
-/* write the msg */
-int writeMsg(int sockfd, enum MessageType mt, 
-                        void *buff, int len) {
-    msg_t msg;
-    memset(&msg, 0, sizeof(msg));
 
-    switch (mt) {
-        case SUCCESS:
-            break;
-        case FAILURE:
-            break;
-        case CREATE_FILE:
-            break;
-        case FILE_BLOCK:
-            break;
-        default:
-            break;
+filehead_t *createFileHead() {
+    filehead_t *pfileHead = (filehead_t *)malloc(sizeof(filehead_t));
+
+    if (pfileHead == NULL) {
+        return NULL;
+    } else {
+        pfileHead->fileName;
+        pfileHead->fileSize;
+        blockCount;
+        blockSize 
     }
 
+
+    return pfileHead;
+}
+*/
+static msg_t *newMsg(size_t bufLen) {
+    msg_t *msg = (msg_t *)malloc(sizeof(msg_t) + bufLen);
+    return msg;
+}
+
+
+/* write the msg */
+int writeMsg(int sockfd, enum MessageType mt, 
+                        void *buf, int bufLen) {
+    msg_t *msg = newMsg(bufLen);
+    if (msg == NULL) {
+        err_msg("%s: new message failed", __FUNCTION__);
+        return -1;
+    }
+    msg->type = mt;
+    msg->bufLen = bufLen;
+    memcpy(msg->buf, buf, bufLen);
+    msg->checkNum = msgCheck(msg);
+    if (send(sockfd, (void*)&msg, sizeof(msg_t) + msg->bufLen, 0) == -1) {
+        err_msg("%s: send error!", __FUNCTION__);
+        return -1;
+    }
+    free(msg);
+    return 0;
 }
 
 /* read the msg */
-int readMsg(int sockfd, void *buff, enum MessageType mt) {
-    switch (mt) {
-        case SUCCESS:
-            break;
-        case FAILURE:
-            break;
-        case CREATE_FILE:
-            break;
-        case FILE_BLOCK:
-            break;
-        default:
-            break;
-    }
-}
-
-
-/**
-int write_msg(int sockfd, char *buff, size_t len) {
-    Msg message;
-    memset(&message, 0, sizeof(message));
-    strcpy(message.head, "iotek2012");
-    memcpy(message.buff, buff, len);
-    message.checknum = msg_check(&message);
-    if (write(sockfd, &message, sizeof(message)) != sizeof(message)) {
+int readMsg(int sockfd, enum MessageType *mt,
+                        void *buf, int *bufLen) {
+    msg_t *msg = newMsg(BUFFSIZE);
+    if (msg == NULL) {
+        err_msg("%s: new message failed", __FUNCTION__);
         return -1;
     }
-}
-
-int read_msg(int sockfd, char *buff, size_t len) {
-    Msg message;
-    memset(&message, 0, sizeof(message));
-    size_t size;
-    if ((size = read(sockfd, &message, sizeof(message))) < 0) {
+    if (recv(sockfd, msg, sizeof(msg_t) + BUFFSIZE, 0) == -1) {
+        err_msg("%s: recv error!", __FUNCTION__);
         return -1;
-    } else if (size == 0){
-        return 0;
     }
-    unsigned char s = msg_check(&message);
-    if ((s == (unsigned char)message.checknum)
-            && (!strcmp("iotek2012", message.head))) {
-        memcpy(buff, message.buff, len);
-        return sizeof(message);
+    if (msg->checkNum != msgCheck(msg)) {
+        err_msg("%s: check failed", __FUNCTION__);
+        return -1;
     }
-    return -1;
-}
+    *mt = msg->type;
+    *bufLen = msg->bufLen;
+    memcpy(buf, msg->buf, msg->bufLen);
+    free(msg);
 
-**/
+    return 0;
+}

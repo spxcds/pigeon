@@ -18,21 +18,28 @@ enum ErrorType {
 typedef struct filehead {
     char        fileName[FILENAME_MAXLEN];      // file name
     int         fileSize;                       // file size
-    int         blockCount;                     // number of block
-    int         blockSize;                      // the size of every block
+//    int         blockCount;                     // number of block
+//    int         blockSize;                      // the size of every block
 }filehead_t;
+
+typedef struct content
+{
+    size_t      len;                            // the buf content
+    char        buf[0];                         // the first address of the buf
+}content_t;
 
 typedef struct fileblock {
     char        fileName[FILENAME_MAXLEN];      // file name
     size_t      offset;                         // offset
-    size_t      len;                            // block length
-    char        content[BUFFSIZE];              // the content
+//    size_t      len;                            // block length
+    content_t   buf;                            // the content;
 }fileblock_t;
 
 typedef struct message{
     enum        MessageType     type;
-    unsigned    short           checknum;
-    char                        buf[sizeof(fileblock_t) + 10];
+    unsigned    short           checkNum;
+    size_t                      bufLen;
+    char                        buf[0];
 }msg_t;
 
 /* write the msg */
