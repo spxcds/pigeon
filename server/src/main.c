@@ -27,8 +27,7 @@ int main(int argc, char **argv) {
     			int fdClient = accept(listenfd, 
     				(struct sockaddr*)&sockClient, &clientLen);
 
-                process(fdClient);
-
+                RecvFile(fdClient);
 
     		} else {
     			err_quit("error in epoll_wait");

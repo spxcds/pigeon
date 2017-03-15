@@ -138,16 +138,17 @@ filehead_t *createFileHead() {
     return pfileHead;
 }
 **/
-static msg_t *newMsg(size_t bufLen) {
+static msg_t *NewMsg(size_t bufLen) {
     msg_t *msg = (msg_t *)malloc(sizeof(msg_t) + bufLen);
     return msg;
 }
 
 
 /* write the msg */
-int writeMsg(int sockfd, enum MessageType mt, 
+int WriteMsg(int sockfd, enum MessageType mt, 
                         void *buf, int bufLen) {
-    msg_t *msg = newMsg(bufLen);
+    puts("----------------------------");
+    msg_t *msg = NewMsg(bufLen);
     if (msg == NULL) {
         err_msg("%s: new message failed", __FUNCTION__);
         return -1;
@@ -156,32 +157,37 @@ int writeMsg(int sockfd, enum MessageType mt,
     msg->bufLen = bufLen;
     memcpy(msg->buf, buf, bufLen);
     msg->checkNum = msgCheck(msg);
-
-    printf("msg->type = %d\n", msg->type);
-    printf("msg->bufLen = %ld\n", msg->bufLen);
     
-    if (send(sockfd, msg, sizeof(msg_t) + msg->bufLen, 0) == -1) {
+    int sendLen = 0;
+    if ((sendLen = send(sockfd, msg, sizeof(msg_t) + msg->bufLen, 0)) <= 0) {
         err_msg("%s: send error!", __FUNCTION__);
         return -1;
     }
+    printf("checkNum =          %u\n", msg->checkNum);
+    printf("sendLen =       %d\n", sendLen);
+    printf("msg->bufLen =   %ld\n", msg->bufLen);
     free(msg);
     return 0;
 }
 
 /* read the msg */
-int readMsg(int sockfd, enum MessageType *mt,
+int ReadMsg(int sockfd, enum MessageType *mt,
                         void *buf, int *bufLen) {
-    msg_t *msg = newMsg(BUFFSIZE);
+    puts("--------------------------------");
+    msg_t *msg = NewMsg(BUFFSIZE);
     if (msg == NULL) {
         err_msg("%s: new message failed", __FUNCTION__);
         return -1;
     }
-    int fff = 0;
-    if ((fff = recv(sockfd, msg, sizeof(msg_t) + BUFFSIZE, 0)) == -1) {
+    int recvLen = 0;
+    if ((recvLen = recv(sockfd, msg, sizeof(msg_t) + BUFFSIZE, 0)) <= 0) {
         err_msg("%s: recv error!", __FUNCTION__);
         return -1;
     }
-    
+    printf("checkNum =      %u\n", msg->checkNum);
+    printf("recvLen     =   %d\n", recvLen);
+    printf("msg->bufLen =   %ld\n", msg->bufLen);
+
     if (msg->checkNum != msgCheck(msg)) {
         err_msg("%s: check failed", __FUNCTION__);
         return -1;

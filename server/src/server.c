@@ -29,6 +29,7 @@ int ServerInit(struct sockaddr_in *sa, in_port_t port) {
 }
 
 void process(int fdClient) {
+/*
     printf("fdClient = %d\n", fdClient);
     char buf[2048];
     int bufLen;

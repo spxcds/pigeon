@@ -1,7 +1,7 @@
-#ifndef __INCLUDE_PIGEON_PROTOCOL_H__
+ #ifndef __INCLUDE_PIGEON_PROTOCOL_H__
 #define __INCLUDE_PIGEON_PROTOCOL_H__
 
-#define BUFFSIZE           1024     /** file buffsize **/
+#define BUFFSIZE           2048     /** message max buffsize **/
 #define FILENAME_MAXLEN    128      /** file name max length **/
 
 enum MessageType {
@@ -17,7 +17,7 @@ enum ErrorType {
 
 typedef struct filehead {
     char        fileName[FILENAME_MAXLEN];      // file name
-    size_t         fileSize;                       // file size
+    size_t      fileSize;                       // file size
 //    int         blockCount;                     // number of block
 //    int         blockSize;                      // the size of every block
 }filehead_t;
@@ -46,10 +46,10 @@ typedef struct message{
 
 int readFileHeadFromBuf(filehead_t *fileHead, void *buf_, int len);
 int writeFileHeadToBuf(filehead_t *fileHead, void *buf_, int len);
-int writeMsg(int sockfd, enum MessageType mt, 
+int WriteMsg(int sockfd, enum MessageType mt, 
                         void *buf, int bufLen);
 
-int readMsg(int sockfd, enum MessageType *mt,
+int ReadMsg(int sockfd, enum MessageType *mt,
                         void *buf, int *bufLen);
 /* write the msg */
 //int writeMsg(int sockfd, void *buff, enum MessageType mt);

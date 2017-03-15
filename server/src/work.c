@@ -2,35 +2,46 @@
 #include "utils.h"
 #include "work.h"
 
-int CreateFile(const char *fileName) {
+static int CreateFile(int sockfd) {
+	enum MessageType mt;
+	char buf[BUFFSIZE * 2];
+	int bufLen;
+	ReadMsg(sockfd, &mt, buf, &bufLen);
+
+    filehead_t fileHead;
+    memcpy(&fileHead, buf, bufLen);
 	int fd;
-	if ((fd = creat(fileName, 0777)) < 0) {
+	if ((fd = creat(fileHead.fileName, 0777)) < 0) {
 		return -1;
 	}
 	return fd;
 }
 
-int RecvFile(const char *fileName, int sockfd) {
+int RecvFile(int sockfd) {
 	int fd;
-	if ((fd = CreateFile(fileName)) < 0) {
-		err_sys("create file failed");
-	}
+	fd = CreateFile(sockfd);
 
-	ssize_t len;
-	char buf[200];
-	printf("before read...\n");
 
-	while ((len = read(sockfd, buf, 16)) > 0) {
-		printf("buf = %s\n", buf);
-		printf("fd = %d\n", fd);
-		if (write(fd, buf, len) != len) {
-			err_sys("write error!");
+	char buf[BUFFSIZE * 2];
+	int bufLen;
+	enum MessageType mt;
+	int cnt = 0;
+
+	while (1) {
+		fileblock_t *fileBlock = NULL;
+		int len = ReadMsg(sockfd, &mt, buf, &bufLen);
+		if (len == -1) {
+			break;
 		}
+		fileBlock = (fileblock_t *)malloc(bufLen);
+		memcpy(fileBlock, buf, bufLen);
+		printf("bufLen = %d\n", bufLen);
+		write(fd, fileBlock->buf, fileBlock->len);
 	}
 
-	printf("len = %ld\n", len);
-	printf("after read...\n");
-	close(fd);
+
+	puts("done!");
 	
+	close(fd);
 	return 0;
 }
