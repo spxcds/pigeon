@@ -42,15 +42,30 @@ int SendFile(const char *fileName, int sockfd) {
     enum MessageType mt = FILE_BLOCK;
     while ((fileBlock->len = read(fd, fileBlock->buf, 
                     BUFFSIZE * sizeof(char) - sizeof(fileblock_t))) > 0) {
-        sleep(1);
+//        sleep(1);
         fileBlock->offset = lseek(fd, 0, SEEK_CUR) - fileBlock->len;
+/*
         printf("fileBlock->len      = %ld\n", fileBlock->len);
         printf("fileBlock->offset   = %ld\n", fileBlock->offset);
+*/
         memcpy(buf, fileBlock, sizeof(fileblock_t) + fileBlock->len);
         int length = WriteMsg(sockfd, mt, buf, sizeof(fileblock_t) + fileBlock->len);
         if (length == -1) {
             err_quit("%s: send file block failed", __FUNCTION__);
         }
+    }
+//    sleep(1);
+    mt = SUCCESS;
+    WriteMsg(sockfd, mt, buf, 0);
+    while (1) {
+        int len;
+        ReadMsg(sockfd, &mt, buf, &len);
+        if (mt == SUCCESS) {
+            break;
+        } else {
+            puts("mt != success");
+        }
+        sleep(1);
     }
 
     return 0;

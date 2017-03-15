@@ -29,8 +29,9 @@ int RecvFile(int sockfd) {
 
 	while (1) {
 		fileblock_t *fileBlock = NULL;
-		int len = ReadMsg(sockfd, &mt, buf, &bufLen);
-		if (len == -1) {
+		ReadMsg(sockfd, &mt, buf, &bufLen);
+		printf("mt = %d\n", mt);
+		if (mt == SUCCESS) {
 			break;
 		}
 		fileBlock = (fileblock_t *)malloc(bufLen);
@@ -39,6 +40,8 @@ int RecvFile(int sockfd) {
 		write(fd, fileBlock->buf, fileBlock->len);
 	}
 
+	printf("bufore write success");
+	WriteMsg(sockfd, mt, buf, 0);
 
 	puts("done!");
 	
