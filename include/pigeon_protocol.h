@@ -5,6 +5,7 @@
 #define FILENAME_MAXLEN    128      /** file name max length **/
 
 enum MessageType {
+    FINISHED,
     SUCCESS,
     FAILURE,
     CREATE_FILE,

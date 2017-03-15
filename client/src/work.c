@@ -38,8 +38,11 @@ int SendFile(const char *fileName, int sockfd) {
     memcpy(fileBlock->fileName, fileName, strlen(fileName));
     fileBlock->offset = 0;
     char buf[sizeof(fileblock_t) + BUFFSIZE * sizeof(char)];
+    
 
     enum MessageType mt = FILE_BLOCK;
+    int len;
+    ReadMsg(sockfd, &mt, buf, &len);
     while ((fileBlock->len = read(fd, fileBlock->buf, 
                     BUFFSIZE * sizeof(char) - sizeof(fileblock_t))) > 0) {
 //        sleep(1);
@@ -50,17 +53,19 @@ int SendFile(const char *fileName, int sockfd) {
 */
         memcpy(buf, fileBlock, sizeof(fileblock_t) + fileBlock->len);
         int length = WriteMsg(sockfd, mt, buf, sizeof(fileblock_t) + fileBlock->len);
+
         if (length == -1) {
             err_quit("%s: send file block failed", __FUNCTION__);
         }
+        
+        ReadMsg(sockfd, &mt, buf, &len);
     }
-//    sleep(1);
-    mt = SUCCESS;
+    mt = FINISHED;
     WriteMsg(sockfd, mt, buf, 0);
     while (1) {
         int len;
         ReadMsg(sockfd, &mt, buf, &len);
-        if (mt == SUCCESS) {
+        if (mt == FINISHED) {
             break;
         } else {
             puts("mt != success");
