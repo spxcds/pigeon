@@ -26,17 +26,18 @@ int RecvFile(int sockfd) {
     enum MessageType mt;
     int cnt = 0;
     mt = SUCCESS;
-    WriteMsg(sockfd, mt, buf, 0);
+//    WriteMsg(sockfd, mt, buf, 0);
     while (1) {
         fileblock_t *fileBlock = NULL;
         ReadMsg(sockfd, &mt, buf, &bufLen);
+        printf("mt = %d\n", mt);
         if (mt == FINISHED) {
             close(fd);
             break;
         }
-        mt = SUCCESS;
-        WriteMsg(sockfd, mt, buf, 0);
-//      printf("mt = %d\n", mt);
+//        mt = SUCCESS;
+//        WriteMsg(sockfd, mt, buf, 0);
+      
 
         fileBlock = (fileblock_t *)malloc(bufLen);
         memcpy(fileBlock, buf, bufLen);
@@ -45,7 +46,7 @@ int RecvFile(int sockfd) {
     }
 
     mt = FINISHED;
-    printf("bufore write success");
+    printf("bufore write success\n");
     WriteMsg(sockfd, mt, buf, 0);
 
     puts("done!");

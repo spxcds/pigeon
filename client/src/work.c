@@ -42,7 +42,7 @@ int SendFile(const char *fileName, int sockfd) {
 
     enum MessageType mt = FILE_BLOCK;
     int len;
-    ReadMsg(sockfd, &mt, buf, &len);
+//    ReadMsg(sockfd, &mt, buf, &len);
     while ((fileBlock->len = read(fd, fileBlock->buf, 
                     BUFFSIZE * sizeof(char) - sizeof(fileblock_t))) > 0) {
 //        sleep(1);
@@ -58,7 +58,7 @@ int SendFile(const char *fileName, int sockfd) {
             err_quit("%s: send file block failed", __FUNCTION__);
         }
         
-        ReadMsg(sockfd, &mt, buf, &len);
+//        ReadMsg(sockfd, &mt, buf, &len);
     }
     mt = FINISHED;
     WriteMsg(sockfd, mt, buf, 0);
