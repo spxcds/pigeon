@@ -51,6 +51,6 @@ int RecvFile(int sockfd) {
 
     puts("done!");
     
-    close(fd);
+    close(sockfd);
     return 0;
 }

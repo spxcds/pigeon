@@ -5,7 +5,7 @@
 
 // server
 int main(int argc, char **argv) {
-//    daemonize(argv[0]);
+    daemonize(argv[0]);
     
 //    tpool_t *threadPool = ThpoolInit(4);
     struct sockaddr_in servaddr;
@@ -16,24 +16,23 @@ int main(int argc, char **argv) {
     epollEvent.events = EPOLLIN;
     epollEvent.data.fd = listenfd;
     epoll_ctl(epfd, EPOLL_CTL_ADD, listenfd, &epollEvent);
- 
 
     for (;;) {
-    	int event_count = epoll_wait(epfd, epollEvents, EPOLL_SIZE, -1);
-    	for (int i = 0; i < event_count; ++i) {
-    		if (epollEvents[i].data.fd == listenfd) {
-    			struct sockaddr_in sockClient;
-    			socklen_t clientLen;
-    			int fdClient = accept(listenfd, 
-    				(struct sockaddr*)&sockClient, &clientLen);
+        int event_count = epoll_wait(epfd, epollEvents, EPOLL_SIZE, -1);
+        for (int i = 0; i < event_count; ++i) {
+            if (epollEvents[i].data.fd == listenfd) {
+                struct sockaddr_in sockClient;
+                socklen_t clientLen;
+                int fdClient = accept(listenfd, 
+                    (struct sockaddr*)&sockClient, &clientLen);
 
                 RecvFile(fdClient);
 
-    		} else {
-    			err_quit("error in epoll_wait");
-    		}
-    	}
-    	sleep(1);
+            } else {
+                err_quit("error in epoll_wait");
+            }
+        }
+        sleep(1);
     }
 
     return 0;
