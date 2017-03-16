@@ -30,7 +30,7 @@ int RecvFile(int sockfd) {
     while (1) {
         fileblock_t *fileBlock = NULL;
         ReadMsg(sockfd, &mt, buf, &bufLen);
-        printf("mt = %d\n", mt);
+//        printf("mt = %d\n", mt);
         if (mt == FINISHED) {
             close(fd);
             break;

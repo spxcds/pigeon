@@ -146,7 +146,7 @@ static msg_t *NewMsg(size_t bufLen) {
 /* write the msg */
 int WriteMsg(int sockfd, enum MessageType mt, 
                         void *buf, int bufLen) {
-    puts("----------------------------");
+    //puts("----------------------------");
     msg_t *msg = NewMsg(bufLen);
     if (msg == NULL) {
         err_msg("%s: new message failed", __FUNCTION__);
@@ -163,10 +163,6 @@ int WriteMsg(int sockfd, enum MessageType mt,
         return -1;
     }
     
-    printf("checkNum =          %u\n", msg->checkNum);
-    //printf("sendLen =           %ld\n", sizeof(msg_t) + msg->bufLen);
-    printf("msg->bufLen =       %ld\n", msg->bufLen);
-    
     free(msg);
     return 0;
 }
@@ -174,34 +170,27 @@ int WriteMsg(int sockfd, enum MessageType mt,
 /* read the msg */
 int ReadMsg(int sockfd, enum MessageType *mt,
                         void *buf, int *bufLen) {
-    puts("--------------------------------");
+    //puts("--------------------------------");
     msg_t *msg = NewMsg(0);
     if (msg == NULL) {
         err_msg("%s: new message failed", __FUNCTION__);
         return -1;
     }
-    //int recvLen = 0;
+
     if (recv(sockfd, msg, sizeof(msg_t), 0) < 0) {
         err_msg("%s: recv message head error!", __FUNCTION__);
         return -1;
     }
     
-    printf("checkNum =      %u\n", msg->checkNum);
-    //printf("recvLen     =   %d\n", recvLen);
-    printf("msg->bufLen =   %ld\n", msg->bufLen);
-    printf("type        =   %d\n", msg->type);
-
-    if (recv(sockfd, buf, msg->bufLen, 0) < 0) {
+    if (msg->bufLen > 0 && recv(sockfd, buf, msg->bufLen, 0) < 0) {
         err_msg("%s: recv message head error!", __FUNCTION__);
         return -1;
     }
-    printf("type        =   %d\n", msg->type);
 
     if (msg->checkNum != msgCheck(buf, msg->bufLen)) {
         err_msg("%s: check failed", __FUNCTION__);
         return -1;
     }
-    printf("type        =   %d\n", msg->type);
     
     *mt = msg->type;
     *bufLen = msg->bufLen;
