@@ -7,14 +7,14 @@
 
 ## Developers
 ```
-spxcds@gmail.com
+    spxcds@gmail.com
 ```
 
 ## How to build
 ```
-$ mkdir build && cd build
-$ cmake ..
-$ make clean && make && make install
+    $ mkdir build && cd build
+    $ cmake ..
+    $ make clean && make && make install
 ```
 
 ## How to use

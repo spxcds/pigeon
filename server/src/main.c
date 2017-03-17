@@ -5,7 +5,7 @@
 
 // server
 int main(int argc, char **argv) {
-    daemonize(argv[0]);
+//    daemonize(argv[0]);
     
 //    tpool_t *threadPool = ThpoolInit(4);
     struct sockaddr_in servaddr;
