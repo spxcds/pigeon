@@ -36,12 +36,15 @@ int main(int argc, char **argv) {
                 epoll_ctl(epfd, EPOLL_CTL_ADD, fdClient, &ev);
         
             } else if (epollEvents[i].events & EPOLLIN) {
-                printf("%d is ready read\n", epollEvents[i].data.fd);
+                RecvFileArg_t arg;
+                arg.sockfd = epollEvents[i].data.fd;
+                ThpoolAddJob(threadPool, (void*)RecvFile, (void*)&arg);
+                //printf("%d is ready read\n", epollEvents[i].data.fd);
             } else {
                 err_quit("error in epoll_wait");
             }
         }
-        sleep(1);
+        //sleep(1);
     }
 
     return 0;

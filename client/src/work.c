@@ -31,6 +31,8 @@ static void *SendFileBlock(void *arg_) {
     if (fileBlock == NULL) {
         err_quit("%s: malloc fileBlock struct failed", __FUNCTION__);
     }
+    char namebuf[] = "test.txt";
+    memcpy(fileBlock->fileName, namebuf, sizeof(namebuf));
     fileBlock->offset = arg->offset;
     char buf[sizeof(fileblock_t) + arg->len * sizeof(char)];
     lseek(arg->filefd, arg->offset, SEEK_SET);
@@ -82,6 +84,9 @@ int SendFile(const char *fileName, fdset_t *fdSet) {
         return -1;
     }
 
+    mt = FINISHED;
+    WriteMsg(fdSet->sockfdArray[0], mt, buf, 0);
+    printf("send finished \n");
     ReadMsg(fdSet->sockfdArray[0], &mt, buf, &len);    
 
     if (mt != FINISHED) {
