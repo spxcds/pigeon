@@ -3,6 +3,13 @@
 
 #define LISTEN_QUEUE_SIZE   20          /** listen queue size **/
 #define EPOLL_SIZE          100         /** epoll listened size **/
+#define THREADNUM           4
+
+typedef struct  fdset {
+    int         sockfdArray[THREADNUM];
+    int         filefdArray[THREADNUM];
+    sem_t       isFree[THREADNUM];
+}fdset_t;
 
 /** new a socket **/
 int NewSocket();
@@ -11,5 +18,9 @@ int NewSocket();
 int ServerInit(struct sockaddr_in *sa, in_port_t port);
 
 void process(int fd);
+
+int FdsetInit(fdset_t *fdSet);
+
+int FdsetDestroy(fdset_t *fdSet);
 
 #endif /** __SERVER_SERVER_H__ **/

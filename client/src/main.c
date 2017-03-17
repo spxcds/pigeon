@@ -17,6 +17,10 @@ int main(int argc, char **argv) {
     
     BuildConnection(ip, fdSet.sockfdArray, THREADNUM);
 
+    for (int i = 0; i < THREADNUM; ++i) {
+        printf("fd = %d\n", fdSet.sockfdArray[i]);
+    }
+
     SendFile(argv[1], &fdSet);
     
     FdsetDestroy(&fdSet);

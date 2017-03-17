@@ -46,3 +46,29 @@ void process(int fdClient) {
     printf("fileHead->size = %d\n", fileHead.fileSize);
     **/
 }
+
+int FdsetInit(fdset_t *fdSet) {
+    if (fdSet == NULL) {
+        return -1;
+    }
+
+    for (int i = 0; i < THREADNUM; ++i) {
+        sem_init(&fdSet->isFree[i], 0, 1);    
+    }
+    
+    return 0;
+}
+
+int FdsetDestroy(fdset_t *fdSet) {
+    if (fdSet == NULL) {
+        return -1;
+    }
+
+    for (int i = 0; i < THREADNUM; ++i) {
+        close(fdSet->sockfdArray[i]);
+        close(fdSet->filefdArray[i]);
+        sem_destroy(&fdSet->isFree[i]);
+    }
+
+    return 0;
+}
