@@ -34,6 +34,7 @@ static void *SendFileBlock(void *arg_) {
     char namebuf[] = "test.txt";
     memcpy(fileBlock->fileName, namebuf, sizeof(namebuf));
     fileBlock->offset = arg->offset;
+    printf("offset = %ld len = %ld\n", fileBlock->offset, fileBlock->len);
     char buf[sizeof(fileblock_t) + arg->len * sizeof(char)];
     lseek(arg->filefd, arg->offset, SEEK_SET);
     enum MessageType mt = FILE_BLOCK;
@@ -67,17 +68,21 @@ int SendFile(const char *fileName, fdset_t *fdSet) {
         for (int i = 0; i < THREADNUM; ++i) {
             fdSet->filefdArray[i] = open(fileName, O_RDONLY);
         }
-        SendFileBlockArg_t arg;
+
         int fileSize = lseek(fdSet->filefdArray[0], 0, SEEK_END);
         for (int i = 0; i < fileSize; i += BUFFSIZE) {
-            arg.sockfd = fdSet->sockfdArray[i % THREADNUM];
-            arg.filefd = fdSet->filefdArray[i % THREADNUM];
-            arg.offset = i;
-            arg.len = BUFFSIZE;
-            if (arg.offset + arg.len > fileSize) {
-                arg.len = fileSize - arg.offset;
+            SendFileBlockArg_t *arg = 
+                        (SendFileBlockArg_t*)malloc(sizeof(SendFileBlockArg_t));
+            arg->sockfd = fdSet->sockfdArray[i % THREADNUM];
+            arg->filefd = fdSet->filefdArray[i % THREADNUM];
+            arg->offset = (size_t)i;
+            
+            arg->len = BUFFSIZE;
+            if (arg->offset + arg->len > fileSize) {
+                arg->len = fileSize - arg->offset;
             }
-            ThpoolAddJob(threadPool, (void*)SendFileBlock, (void *)&arg);
+            printf("offset = %ld len = %ld\n", arg->offset, arg->len);
+            ThpoolAddJob(threadPool, (void*)SendFileBlock, (void *)arg);
         }
     } else {
         err_msg("%s: receive success message error", __FUNCTION__);

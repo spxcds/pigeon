@@ -23,13 +23,14 @@ static int WriteFileBlock(const char *buf, int bufLen) {
     }
     memcpy(fileBlock, buf, bufLen);
     int fd;
-    if ((fd = open(fileBlock->fileName, O_RDONLY)) == -1) {
+    if ((fd = open(fileBlock->fileName, O_RDWR)) == -1) {
         err_msg("%s: open %s error", __FUNCTION__, fileBlock->fileName);
     }
-    printf("filename = %s fd = %d offset = %ld\n", fileBlock->fileName, fd, fileBlock->offset);
-    printf("len = %ld buf = %s\n", fileBlock->len, fileBlock->buf);
+    printf("filename = %s fd = %d offset = %ld len = %ld\n", fileBlock->fileName, fd, fileBlock->offset, fileBlock->len);
+ //   printf("len = %ld buf = %s\n", fileBlock->len, fileBlock->buf);
     lseek(fd, fileBlock->offset, SEEK_SET);
-    write(fd, fileBlock->buf, fileBlock->len);
+    int succeed = write(fd, fileBlock->buf, fileBlock->len);
+    printf("succeed = %d\n", succeed);
     close(fd);
     return 0;
 }
@@ -54,9 +55,10 @@ void *RecvFile(void *arg_) {
         case FAILURE:
             break;
         case FINISHED:
+            sleep(1);
             printf("send FINISHED\n");
             mt = FINISHED;
-            WriteMsg(arg->sockfd, mt, buf, 0);
+            //WriteMsg(arg->sockfd, mt, buf, 0);
             break;;
         default:
             err_msg("%s: message type error", __FUNCTION__);
