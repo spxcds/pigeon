@@ -35,7 +35,7 @@ typedef struct fileblock {
     char        fileName[FILENAME_MAXLEN];      // file name
     size_t      offset;                         // offset
     size_t      len;                            // block length
-    char        buf[0];                            // the content;
+    char        buf[0];                         // the content;
 }fileblock_t;
 
 typedef struct message{

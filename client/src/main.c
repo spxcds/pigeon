@@ -10,17 +10,16 @@ int main(int argc, char **argv) {
         exit(-1);
     }
 
-    int sockfd = NewSocket(); 
-    const char *arg = "127.0.0.1";
-    struct sockaddr_in *servaddr = NewServerAddr(sockfd, arg);
+    fdset_t fdSet;
+    FdsetInit(&fdSet);
 
-    if (connect(sockfd, (struct sockaddr *)servaddr, 
-                                sizeof(*servaddr)) != 0) {
-        err_quit("connect failed");
-    }
+    const char *ip = "127.0.0.1";
+    
+    BuildConnection(ip, fdSet.sockfdArray, THREADNUM);
 
-    SendFile(argv[1], sockfd);
-    close(sockfd);
+    SendFile(argv[1], &fdSet);
+    
+    FdsetDestroy(&fdSet);
     printf("send success\n");
     return 0;
 }

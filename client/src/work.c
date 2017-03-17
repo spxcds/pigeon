@@ -12,65 +12,81 @@ static int SendFileInfo(const char *fileName, int sockfd) {
     memcpy(fileHead.fileName, fileName, strlen(fileName));
     memcpy(buf, &fileHead, sizeof(fileHead));
     enum MessageType mt = CREATE_FILE;
-    int length = WriteMsg(sockfd, mt, buf, sizeof(fileHead));
-    if (length == -1) {
+
+    if (WriteMsg(sockfd, mt, buf, sizeof(fileHead)) == -1) {
+        err_quit("%s: send message error!");
         return -1;
     }
     return 0;
 }
 
-int SendFile(const char *fileName, int sockfd) {
-    if (SendFileInfo(fileName, sockfd) == -1) {
-        err_quit("%s: send file info failed", __FUNCTION__);
-    }
-    
-    int fd = open(fileName, O_RDONLY);
-    if (fd == -1) {
-        err_quit("%s: open file failed", __FUNCTION__);
+static void *SendFileBlock(void *arg_) {
+    SendFileBlockArg_t *arg = (SendFileBlockArg_t *)arg_;
+    if (arg == NULL) {
+        err_msg("%s: arg is NULL", __FUNCTION__);
     }
 
-
-    fileblock_t *fileBlock = (fileblock_t *)malloc(BUFFSIZE * sizeof(char));
+    sem_wait(&arg->hasResource);
+    fileblock_t *fileBlock = (fileblock_t *)malloc(arg->len * sizeof(char));
     if (fileBlock == NULL) {
         err_quit("%s: malloc fileBlock struct failed", __FUNCTION__);
     }
-
-    memcpy(fileBlock->fileName, fileName, strlen(fileName));
-    fileBlock->offset = 0;
-    char buf[sizeof(fileblock_t) + BUFFSIZE * sizeof(char)];
-    
-
+    fileBlock->offset = arg->offset;
+    char buf[sizeof(fileblock_t) + arg->len * sizeof(char)];
+    lseek(arg->filefd, arg->offset, SEEK_SET);
     enum MessageType mt = FILE_BLOCK;
-    int len;
-//    ReadMsg(sockfd, &mt, buf, &len);
-    while ((fileBlock->len = read(fd, fileBlock->buf, 
-                    BUFFSIZE * sizeof(char) - sizeof(fileblock_t))) > 0) {
-//        sleep(1);
-        fileBlock->offset = lseek(fd, 0, SEEK_CUR) - fileBlock->len;
-/*
-        printf("fileBlock->len      = %ld\n", fileBlock->len);
-        printf("fileBlock->offset   = %ld\n", fileBlock->offset);
-*/
-        memcpy(buf, fileBlock, sizeof(fileblock_t) + fileBlock->len);
-        int length = WriteMsg(sockfd, mt, buf, sizeof(fileblock_t) + fileBlock->len);
-
-        if (length == -1) {
-            err_quit("%s: send file block failed", __FUNCTION__);
-        }
-        
-//        ReadMsg(sockfd, &mt, buf, &len);
+    fileBlock->len = read(arg->filefd, fileBlock->buf, 
+                    arg->len * sizeof(char) - sizeof(fileblock_t));
+    memcpy(buf, fileBlock, sizeof(fileblock_t) + fileBlock->len);
+    if (WriteMsg(arg->sockfd, mt, buf, sizeof(fileblock_t) + fileBlock->len) == -1) {
+        err_quit("%s: send file block failed", __FUNCTION__);
     }
-    mt = FINISHED;
-    WriteMsg(sockfd, mt, buf, 0);
-    while (1) {
-        int len;
-        ReadMsg(sockfd, &mt, buf, &len);
-        if (mt == FINISHED) {
-            break;
-        } else {
-            puts("mt != success");
+    free(fileBlock);
+
+    sem_post(&arg->hasResource);
+}
+
+int SendFile(const char *fileName, fdset_t *fdSet) {
+    if (fileName == NULL || fdSet == NULL) {
+        err_msg("%s: fileName or fdSet is NULL", __FUNCTION__);
+        return -1;
+    }
+    if (SendFileInfo(fileName, fdSet->sockfdArray[0]) == -1) {
+        err_quit("%s: send file info failed", __FUNCTION__);
+    }
+
+    int len;
+    enum MessageType mt;
+    char buf[sizeof(fileblock_t) + BUFFSIZE * sizeof(char)];
+    ReadMsg(fdSet->sockfdArray[0], &mt, buf, &len);
+
+    if (mt == SUCCESS) {
+        tpool_t *threadPool = ThpoolInit(THREADNUM);
+        for (int i = 0; i < THREADNUM; ++i) {
+            fdSet->filefdArray[i] = open(fileName, O_RDONLY);
         }
-        sleep(1);
+        SendFileBlockArg_t arg;
+        int fileSize = lseek(fdSet->filefdArray[0], 0, SEEK_END);
+        for (int i = 0; i < fileSize; i += BUFFSIZE) {
+            arg.sockfd = fdSet->sockfdArray[i % THREADNUM];
+            arg.filefd = fdSet->filefdArray[i % THREADNUM];
+            arg.offset = i;
+            arg.len = BUFFSIZE;
+            if (arg.offset + arg.len > fileSize) {
+                arg.len = fileSize - arg.offset;
+            }
+            ThpoolAddJob(threadPool, (void*)SendFileBlock, (void *)&arg);
+        }
+    } else {
+        err_msg("%s: receive success message error", __FUNCTION__);
+        return -1;
+    }
+
+    ReadMsg(fdSet->sockfdArray[0], &mt, buf, &len);    
+
+    if (mt != FINISHED) {
+        err_msg("%s: receive finished message error", __FUNCTION__);
+        return -1;
     }
 
     return 0;
