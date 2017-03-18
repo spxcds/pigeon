@@ -6,9 +6,8 @@
 //int SendFile(const char *fileName, int sockfd);
 
 typedef struct sendFileBlockArg{
-    int             sockfd;
-    int             filefd;
-    sem_t           hasResource;
+    fdset_t         *fdSet;
+    int             idx;
     size_t          offset;
     size_t          len;
 }SendFileBlockArg_t;

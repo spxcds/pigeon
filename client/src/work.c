@@ -21,33 +21,38 @@ static int SendFileInfo(const char *fileName, int sockfd) {
 }
 
 static void *SendFileBlock(void *arg_) {
-    printf("I'm in send file Block\n");
     SendFileBlockArg_t *arg = (SendFileBlockArg_t *)arg_;
+    
     if (arg == NULL) {
         err_msg("%s: arg is NULL", __FUNCTION__);
     }
 
-    sem_wait(&arg->hasResource);
-    fileblock_t *fileBlock = (fileblock_t *)malloc(arg->len * sizeof(char));
+    sem_wait(&arg->fdSet->isFree[arg->idx]);
+    fileblock_t *fileBlock = (fileblock_t *)
+            malloc(sizeof (fileblock_t) + arg->len * sizeof(char));
     if (fileBlock == NULL) {
         err_quit("%s: malloc fileBlock struct failed", __FUNCTION__);
     }
     char namebuf[] = "test.txt";
     memcpy(fileBlock->fileName, namebuf, sizeof(namebuf));
     fileBlock->offset = arg->offset;
-    printf("offset = %ld len = %ld\n", fileBlock->offset, fileBlock->len);
     char buf[sizeof(fileblock_t) + arg->len * sizeof(char)];
-    lseek(arg->filefd, arg->offset, SEEK_SET);
+    lseek(arg->fdSet->filefdArray[arg->idx], arg->offset, SEEK_SET);
     enum MessageType mt = FILE_BLOCK;
-    fileBlock->len = read(arg->filefd, fileBlock->buf, 
-                    arg->len * sizeof(char) - sizeof(fileblock_t));
+    fileBlock->len = read(arg->fdSet->filefdArray[arg->idx], fileBlock->buf, 
+                    arg->len * sizeof(char));
+    if (fileBlock->len == -1) {
+        err_quit("%s: read file error", __FUNCTION__);
+    }
     memcpy(buf, fileBlock, sizeof(fileblock_t) + fileBlock->len);
-    if (WriteMsg(arg->sockfd, mt, buf, sizeof(fileblock_t) + fileBlock->len) == -1) {
+    if (WriteMsg(arg->fdSet->sockfdArray[arg->idx], mt, 
+                buf, sizeof(fileblock_t) + fileBlock->len) == -1) {
         err_quit("%s: send file block failed", __FUNCTION__);
     }
+    
     free(fileBlock);
-
-    sem_post(&arg->hasResource);
+    sem_post(&arg->fdSet->isFree[arg->idx]);
+    free(arg);
 }
 
 int SendFile(const char *fileName, fdset_t *fdSet) {
@@ -73,13 +78,14 @@ int SendFile(const char *fileName, fdset_t *fdSet) {
 
         int fileSize = lseek(fdSet->filefdArray[0], 0, SEEK_END);
         for (int i = 0; i < fileSize; i += BUFFSIZE) {
+            printf("i = %d\n", i);
             SendFileBlockArg_t *arg = 
                         (SendFileBlockArg_t*)malloc(sizeof(SendFileBlockArg_t));
-            arg->sockfd = fdSet->sockfdArray[i % THREADNUM];
-            arg->filefd = fdSet->filefdArray[i % THREADNUM];
+            arg->fdSet = fdSet;
+            arg->idx = i % THREADNUM;
             arg->offset = (size_t)i;
-            
             arg->len = BUFFSIZE;
+
             if (arg->offset + arg->len > fileSize) {
                 arg->len = fileSize - arg->offset;
             }
@@ -95,6 +101,7 @@ int SendFile(const char *fileName, fdset_t *fdSet) {
     WriteMsg(fdSet->sockfdArray[0], mt, buf, 0);
     printf("send finished \n");
     if (threadPool != NULL) {
+        ThpoolWait(threadPool);
         printf("working threads num is %d\n", ThpoolWorkingNum(threadPool));
         ThpoolDestroy(threadPool);
     }

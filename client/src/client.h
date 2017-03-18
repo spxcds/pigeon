@@ -1,7 +1,7 @@
 #ifndef __CLIENT_CLIENT_H__
 #define __CLIENT_CLIENT_H__
 
-#define     THREADNUM       1
+#define     THREADNUM       4
 
 typedef struct  fdset {
     int         sockfdArray[THREADNUM];
