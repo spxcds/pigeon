@@ -3,7 +3,7 @@
 
 #define LISTEN_QUEUE_SIZE   20          /** listen queue size **/
 #define EPOLL_SIZE          100         /** epoll listened size **/
-#define THREADNUM           4
+#define THREADNUM           1
 
 typedef struct  fdset {
     int         sockfdArray[THREADNUM];
