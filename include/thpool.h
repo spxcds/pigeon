@@ -17,6 +17,7 @@ typedef struct jobqueue{
     job_t               *front;
     job_t               *rear;
     sem_t               hasJob;
+    int                 jobsNum;
 } jobqueue_t;
 
 
@@ -61,6 +62,12 @@ void ThpoolDestroy(tpool_t *);
 
 /*  show currently working threads */
 int ThpoolWorkingNum(tpool_t *);
+
+/*  show currently alive threads */
+int ThpoolAliveNum(tpool_t *);
+
+/*  show currently size of jobs */
+int ThpoolJobsNum(tpool_t *);
 
 
 #endif  /** __INCLUDE_THPOLL_H__ **/

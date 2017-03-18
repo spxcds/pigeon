@@ -6,7 +6,7 @@
 // server
 int main(int argc, char **argv) {
 //    daemonize(argv[0]);
-    
+
     tpool_t *threadPool = ThpoolInit(THREADNUM);
     struct sockaddr_in servaddr;
     int listenfd = ServerInit(&servaddr, SERV_PORT);

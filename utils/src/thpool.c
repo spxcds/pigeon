@@ -11,7 +11,6 @@ static int JobqueueIsEmpty(jobqueue_t *);
 static int ThreadInit(tpool_t *, thread_t **, int);
 static void *ThreadRoutine(thread_t *);
 
-
 /* initialize thread pool */
 tpool_t *ThpoolInit(int num_threads) {
     if (num_threads < 0){
@@ -102,6 +101,8 @@ void ThpoolDestroy(tpool_t *threadPool){
         sem_post(&threadPool->jobqueue.hasJob);
     }
 
+    while (sem_trywait(&threadPool->jobqueue.hasJob) == 0) {};
+
     JobqueueDestroy(&threadPool->jobqueue);
     
     int i;
@@ -131,12 +132,11 @@ void thpool_resume(thpool_* thpool_p) {
 
     threads_on_hold = 0;
 }
-
-
-int thpool_num_threads_working(thpool_* thpool_p){
-    return thpool_p->num_threads_working;
-}
 **/
+
+int ThpoolWorkingNum(tpool_t *threadPool){
+    return threadPool->numThreadsWorking;
+}
 
 
 static int ThreadInit(tpool_t *threadPool, thread_t **threads, int id) {
@@ -186,14 +186,12 @@ static void *ThreadRoutine(thread_t *thread) {
     }
     **/
 
-    
     pthread_mutex_lock(&threadPool->tpoolMutex);
     threadPool->numThreadsAlive++;
     pthread_mutex_unlock(&threadPool->tpoolMutex);
 
     while (threadPool->keepAlive == 1) {
         sem_wait(&(threadPool->jobqueue.hasJob));
-
         if (threadPool->keepAlive == 1) {
             pthread_mutex_lock(&threadPool->tpoolMutex);
             threadPool->numThreadsWorking++;
@@ -233,6 +231,7 @@ static int JobqueueInit(jobqueue_t *JbQueue){
     JbQueue->rear   = NULL;
 
     sem_init(&JbQueue->hasJob, 0, 0);
+    JbQueue->jobsNum = 0;
     pthread_mutex_init(&(JbQueue->jobMutex), NULL);
 
     return 0;
@@ -243,7 +242,9 @@ static int JobqueueInit(jobqueue_t *JbQueue){
 static void JobqueueDestroy(jobqueue_t *JbQueue){
     pthread_mutex_lock(&JbQueue->jobMutex);
     while (sem_trywait(&JbQueue->hasJob) == 0) {
+        pthread_mutex_unlock(&JbQueue->jobMutex);
         free(JobqueueFront(JbQueue));
+        pthread_mutex_lock(&JbQueue->jobMutex);
     }
     sem_destroy(&JbQueue->hasJob);
     pthread_mutex_unlock(&JbQueue->jobMutex);
@@ -264,6 +265,7 @@ static void JobqueuePush(jobqueue_t* JbQueue, job_t* newJob){
         JbQueue->rear = newJob;
     }
     sem_post(&JbQueue->hasJob);
+    JbQueue->jobsNum++;
     pthread_mutex_unlock(&JbQueue->jobMutex);
 }
 
@@ -277,8 +279,8 @@ static job_t *JobqueueFront(jobqueue_t *JbQueue) {
         if (JbQueue->front == NULL) {
             JbQueue->rear = NULL;
         }
+        JbQueue->jobsNum--;
     }
-
     pthread_mutex_unlock(&JbQueue->jobMutex);
     return job_p;
 }
@@ -289,4 +291,13 @@ static int JobqueueIsEmpty(jobqueue_t *JbQueue) {
     int isEmpty = JbQueue->front == NULL;
     pthread_mutex_unlock(&JbQueue->jobMutex);
     return isEmpty;
+}
+
+int ThpoolAliveNum(tpool_t * threadPool) {
+    return threadPool->numThreadsAlive;
+}
+
+/*  show currently size of jobs */
+int ThpoolJobsNum(tpool_t *threadPool) {
+    return threadPool->jobqueue.jobsNum;
 }

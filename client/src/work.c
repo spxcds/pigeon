@@ -21,6 +21,7 @@ static int SendFileInfo(const char *fileName, int sockfd) {
 }
 
 static void *SendFileBlock(void *arg_) {
+    printf("I'm in send file Block\n");
     SendFileBlockArg_t *arg = (SendFileBlockArg_t *)arg_;
     if (arg == NULL) {
         err_msg("%s: arg is NULL", __FUNCTION__);
@@ -62,9 +63,10 @@ int SendFile(const char *fileName, fdset_t *fdSet) {
     enum MessageType mt;
     char buf[sizeof(fileblock_t) + BUFFSIZE * sizeof(char)];
     ReadMsg(fdSet->sockfdArray[0], &mt, buf, &len);
+    tpool_t *threadPool = NULL;
 
     if (mt == SUCCESS) {
-        tpool_t *threadPool = ThpoolInit(THREADNUM);
+        threadPool = ThpoolInit(THREADNUM);
         for (int i = 0; i < THREADNUM; ++i) {
             fdSet->filefdArray[i] = open(fileName, O_RDONLY);
         }
@@ -92,6 +94,10 @@ int SendFile(const char *fileName, fdset_t *fdSet) {
     mt = FINISHED;
     WriteMsg(fdSet->sockfdArray[0], mt, buf, 0);
     printf("send finished \n");
+    if (threadPool != NULL) {
+        printf("working threads num is %d\n", ThpoolWorkingNum(threadPool));
+        ThpoolDestroy(threadPool);
+    }
     ReadMsg(fdSet->sockfdArray[0], &mt, buf, &len);    
 
     if (mt != FINISHED) {
