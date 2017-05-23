@@ -92,7 +92,7 @@ int SendFile(const char *fileName, const char *remoteFile, fdset_t *fdSet) {
             //ThpoolAddJob(threadPool, (void*)SendFileBlock, (void *)arg);
         }
     } else {
-        err_msg("%s: receive success message error", __FUNCTION__);
+        err_msg("server error: %s", buf);
         return -1;
     }
 

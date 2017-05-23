@@ -49,9 +49,18 @@ void *RecvFile(void *arg_) {
     ReadMsg(arg->sockfd, &mt, buf, &bufLen);
     switch (mt) {
         case CREATE_FILE:
-            CreateFile(buf, bufLen);
-            mt = SUCCESS;
-            WriteMsg(arg->sockfd, mt, buf, 0);
+            if (CreateFile(buf, bufLen) == 0) {
+                mt = SUCCESS;
+                WriteMsg(arg->sockfd, mt, buf, 0);
+            } else {
+                mt = FAILURE;
+                char message[] = "No such directory in server";
+                memcpy(buf, message, strlen(message));
+                buf[strlen(message)] = 0;
+                WriteMsg(arg->sockfd, mt, buf, strlen(buf));
+                DelEpollFd(arg->sockfd);
+            }
+            
             break;
         case SUCCESS:
             break;
