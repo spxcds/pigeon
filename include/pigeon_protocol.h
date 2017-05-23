@@ -1,4 +1,4 @@
- #ifndef __INCLUDE_PIGEON_PROTOCOL_H__
+#ifndef __INCLUDE_PIGEON_PROTOCOL_H__
 #define __INCLUDE_PIGEON_PROTOCOL_H__
 
 #define BUFFSIZE           2048     /** message max buffsize **/

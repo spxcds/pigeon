@@ -2,14 +2,14 @@
 #include "utils.h"
 #include "work.h"
 
-static int SendFileInfo(const char *fileName, int sockfd) {
+static int SendFileInfo(const char *fileName, const char *remoteFile, int sockfd) {
     char buf[BUFFSIZE * 2];
     filehead_t fileHead;
     int fd = open(fileName, O_RDONLY);
     fileHead.fileSize = lseek(fd, 0, SEEK_END);
     close(fd);
 
-    memcpy(fileHead.fileName, fileName, strlen(fileName));
+    memcpy(fileHead.fileName, remoteFile, strlen(remoteFile));
     memcpy(buf, &fileHead, sizeof(fileHead));
     enum MessageType mt = CREATE_FILE;
 
@@ -20,7 +20,7 @@ static int SendFileInfo(const char *fileName, int sockfd) {
     return 0;
 }
 
-static void *SendFileBlock(void *arg_) {
+static void *SendFileBlock(const char *remoteFile, void *arg_) {
     SendFileBlockArg_t *arg = (SendFileBlockArg_t *)arg_;
     
     if (arg == NULL) {
@@ -33,8 +33,7 @@ static void *SendFileBlock(void *arg_) {
     if (fileBlock == NULL) {
         err_quit("%s: malloc fileBlock struct failed", __FUNCTION__);
     }
-    char namebuf[] = "test.txt";
-    memcpy(fileBlock->fileName, namebuf, sizeof(namebuf));
+    memcpy(fileBlock->fileName, remoteFile, strlen(remoteFile));
     fileBlock->offset = arg->offset;
     char buf[sizeof(fileblock_t) + arg->len * sizeof(char)];
     lseek(arg->fdSet->filefdArray[arg->idx], arg->offset, SEEK_SET);
@@ -55,12 +54,12 @@ static void *SendFileBlock(void *arg_) {
     free(arg);
 }
 
-int SendFile(const char *fileName, fdset_t *fdSet) {
+int SendFile(const char *fileName, const char *remoteFile, fdset_t *fdSet) {
     if (fileName == NULL || fdSet == NULL) {
         err_msg("%s: fileName or fdSet is NULL", __FUNCTION__);
         return -1;
     }
-    if (SendFileInfo(fileName, fdSet->sockfdArray[0]) == -1) {
+    if (SendFileInfo(fileName, remoteFile, fdSet->sockfdArray[0]) == -1) {
         err_quit("%s: send file info failed", __FUNCTION__);
     }
 
@@ -78,7 +77,6 @@ int SendFile(const char *fileName, fdset_t *fdSet) {
 
         int fileSize = lseek(fdSet->filefdArray[0], 0, SEEK_END);
         for (int i = 0; i < fileSize; i += BUFFSIZE) {
-            printf("i = %d\n", i);
             SendFileBlockArg_t *arg = 
                         (SendFileBlockArg_t*)malloc(sizeof(SendFileBlockArg_t));
             arg->fdSet = fdSet;
@@ -90,7 +88,7 @@ int SendFile(const char *fileName, fdset_t *fdSet) {
                 arg->len = fileSize - arg->offset;
             }
             // printf("offset = %ld len = %ld\n", arg->offset, arg->len);
-            SendFileBlock(arg);
+            SendFileBlock(remoteFile, arg);
             //ThpoolAddJob(threadPool, (void*)SendFileBlock, (void *)arg);
         }
     } else {

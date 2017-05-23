@@ -12,6 +12,6 @@ typedef struct sendFileBlockArg{
     size_t          len;
 }SendFileBlockArg_t;
 
-int SendFile(const char *fileName, fdset_t *fdSet);
+int SendFile(const char *fileName, const char *remoteFile, fdset_t *fdSet);
 
 #endif /** __CLIENT_WORK_H__ **/
