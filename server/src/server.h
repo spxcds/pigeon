@@ -5,6 +5,9 @@
 #define EPOLL_SIZE          100         /** epoll listened size **/
 #define THREADNUM           1
 
+struct epoll_event epollEvent, epollEvents[EPOLL_SIZE];
+int epfd;
+
 typedef struct  fdset {
     int         sockfdArray[THREADNUM];
     int         filefdArray[THREADNUM];

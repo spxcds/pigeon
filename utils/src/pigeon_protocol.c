@@ -156,7 +156,7 @@ int WriteMsg(int sockfd, enum MessageType mt,
     msg->bufLen = bufLen;
     memcpy(msg->buf, buf, bufLen);
     msg->checkNum = msgCheck(msg->buf, msg->bufLen);
-    printf("msg->checkNum = %u msg->bufLen = %ld\n", msg->checkNum, msg->bufLen);
+    // printf("msg->checkNum = %u msg->bufLen = %ld\n", msg->checkNum, msg->bufLen);
     
     if (send(sockfd, msg, sizeof(msg_t) + msg->bufLen, 0) != 
                         sizeof(msg_t) + msg->bufLen) {
@@ -179,29 +179,37 @@ int ReadMsg(int sockfd, enum MessageType *mt,
     }
 
     int recvHeadNum = 0;
-
+    msg->type = 1111;
+    msg->checkNum = 1111;
+    msg->bufLen = 1111;
     if ((recvHeadNum = recv(sockfd, msg, sizeof(msg_t), 0)) < 0) {
         err_msg("%s: recv message head error!", __FUNCTION__);
         return -1;
     }
 
+    // printf("recv = %d msg->type = %u msg->checkNum = %u msg->bufLen = %ld\n", recvHeadNum, msg->type, msg->checkNum, msg->bufLen);
+
     if (recvHeadNum == 0) {
-        *mt = 200000000;
+        *mt = FINISHED;
         *bufLen = 0;
         free(msg);
         return 0;
     }
     
-    if (msg->bufLen > 0 && recv(sockfd, buf, msg->bufLen, 0) < 0) {
-        free(msg);
-        err_msg("%s: recv message body error!", __FUNCTION__);
-        return -1;
+    int recvLen = 0;
+    while (msg->bufLen > 0 && recvLen < msg->bufLen) {
+        int oneRecv = 0;
+        if ((oneRecv =  recv(sockfd, buf + recvLen, msg->bufLen - recvLen, 0)) < 0) {
+            free(msg);
+            err_msg("%s: recv message body error!", __FUNCTION__);
+            return -1;
+        }
+        recvLen += oneRecv;
     }
 
     *mt = msg->type;
     *bufLen = msg->bufLen;
 
-    printf("msg->checkNum = %u msg->bufLen = %ld\n", msg->checkNum, msg->bufLen);
     if (msg->checkNum != msgCheck(buf, msg->bufLen)) {
         err_msg("%s: check failed", __FUNCTION__);
         free(msg);

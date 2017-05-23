@@ -10,9 +10,8 @@ int main(int argc, char **argv) {
     tpool_t *threadPool = ThpoolInit(THREADNUM);
     struct sockaddr_in servaddr;
     int listenfd = ServerInit(&servaddr, SERV_PORT);
-    struct epoll_event epollEvent, epollEvents[EPOLL_SIZE];
-
-    int epfd = epoll_create(EPOLL_SIZE);
+    
+    epfd = epoll_create(EPOLL_SIZE);
     epollEvent.events = EPOLLIN;
     epollEvent.data.fd = listenfd;
     epoll_ctl(epfd, EPOLL_CTL_ADD, listenfd, &epollEvent);
@@ -36,10 +35,11 @@ int main(int argc, char **argv) {
                 epoll_ctl(epfd, EPOLL_CTL_ADD, fdClient, &ev);
         
             } else if (epollEvents[i].events & EPOLLIN) {
+                // printf("=======i = %d\n fd = %d\n", i, epollEvents[i].data.fd);
                 RecvFileArg_t arg;
                 arg.sockfd = epollEvents[i].data.fd;
-                ThpoolAddJob(threadPool, (void*)RecvFile, (void*)&arg);
-                //printf("%d is ready read\n", epollEvents[i].data.fd);
+                RecvFile((void*)&arg);
+                // ThpoolAddJob(threadPool, (void*)RecvFile, (void*)&arg);
             } else {
                 err_quit("error in epoll_wait");
             }

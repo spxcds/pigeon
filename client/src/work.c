@@ -89,8 +89,9 @@ int SendFile(const char *fileName, fdset_t *fdSet) {
             if (arg->offset + arg->len > fileSize) {
                 arg->len = fileSize - arg->offset;
             }
-            printf("offset = %ld len = %ld\n", arg->offset, arg->len);
-            ThpoolAddJob(threadPool, (void*)SendFileBlock, (void *)arg);
+            // printf("offset = %ld len = %ld\n", arg->offset, arg->len);
+            SendFileBlock(arg);
+            //ThpoolAddJob(threadPool, (void*)SendFileBlock, (void *)arg);
         }
     } else {
         err_msg("%s: receive success message error", __FUNCTION__);
@@ -99,17 +100,20 @@ int SendFile(const char *fileName, fdset_t *fdSet) {
 
     mt = FINISHED;
     WriteMsg(fdSet->sockfdArray[0], mt, buf, 0);
-    printf("send finished \n");
+    // printf("send finished \n");
     if (threadPool != NULL) {
         ThpoolWait(threadPool);
-        printf("working threads num is %d\n", ThpoolWorkingNum(threadPool));
+        // printf("working threads num is %d\n", ThpoolWorkingNum(threadPool));
         ThpoolDestroy(threadPool);
     }
     ReadMsg(fdSet->sockfdArray[0], &mt, buf, &len);    
 
     if (mt != FINISHED) {
         err_msg("%s: receive finished message error", __FUNCTION__);
+        close(fdSet->sockfdArray[0]);
         return -1;
+    } else {
+        close(fdSet->sockfdArray[0]);
     }
 
     return 0;
